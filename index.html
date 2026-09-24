@@ -36,8 +36,14 @@
   }
   @media (min-width: 980px) {
     :root {
-      --bs: max(300px, min(calc(100vh - 250px), calc(100vw - 660px), 640px));
-      --bs: max(300px, min(calc(100dvh - 250px), calc(100vw - 660px), 640px));
+      --bs: max(320px, min(calc((100vh - 184px) / 1.06), calc(100vw - 640px), 1000px));
+      --bs: max(320px, min(calc((100dvh - 184px) / 1.06), calc(100vw - 640px), 1000px));
+    }
+  }
+  @media (min-width: 1180px) {
+    :root {
+      --bs: max(320px, min(calc((100vh - 120px) / 1.06), calc(100vw - 640px), 1000px));
+      --bs: max(320px, min(calc((100dvh - 120px) / 1.06), calc(100vw - 640px), 1000px));
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -125,6 +131,30 @@
   .status.clickable:hover { background: rgba(30, 50, 42, .8); }
   .thinking::after { content: ""; display: inline-block; width: 1.2em; text-align: left; animation: dots 1.2s steps(4) infinite; }
   @keyframes dots { 0% { content: ""; } 25% { content: "・"; } 50% { content: "・・"; } 75% { content: "・・・"; } }
+
+  .hud-row { display: flex; align-items: center; justify-content: center; gap: 10px; max-width: 100%; }
+  .chip {
+    display: none; align-items: center; gap: 12px; padding: 9px 18px; border-radius: 999px; min-height: 40px;
+    font-family: var(--num); font-size: 13px; color: var(--muted); letter-spacing: .04em; white-space: nowrap;
+  }
+  .chip b { color: var(--text); font-weight: 600; }
+  .chip .bar { width: 110px; }
+  @media (min-width: 980px) {
+    .score { display: none; }
+    .chip { display: flex; }
+    .app { padding-top: calc(18px + var(--safe-t)); gap: 18px; }
+    .status { font-size: 15px; padding: 9px 20px; min-height: 40px; gap: 10px; }
+    .status small { font-size: 13px; }
+    .status .dot { width: 12px; height: 12px; }
+  }
+  @media (min-width: 1180px) {
+    .app { padding-bottom: calc(24px + var(--safe-b)); }
+    nav.dock { top: calc(14px + var(--safe-t)); bottom: auto; left: auto; right: 20px; transform: none; }
+  }
+  @media (min-width: 1180px) and (max-width: 1439px) {
+    nav.dock button span { display: none; }
+    nav.dock button { min-width: 46px; height: 46px; }
+  }
 
   /* ---------- stage ---------- */
   .stage {
@@ -259,10 +289,12 @@
   #rackB { grid-area: rb; }
   #rackW { grid-area: rw; }
   @media (min-width: 980px) {
-    .rack { width: clamp(220px, calc((100vw - var(--bs)) / 2 - 80px), calc(var(--k) * 72px + 36px)); padding: 16px 18px 18px; border-radius: 22px; }
-    .rack-head { font-size: 13.5px; margin-bottom: 14px; gap: 9px; }
-    .rack-head .disc-ico { width: 17px; height: 17px; }
-    .rack-head .meta { font-size: 12px; }
+    .rack { width: clamp(240px, calc((100vw - var(--bs)) / 2 - 64px), calc(var(--k) * 74px + 44px)); padding: 20px 22px 22px; border-radius: 24px; }
+    .rack-head { font-size: 13px; margin-bottom: 14px; gap: 9px; color: var(--muted); }
+    .rack-head .disc-ico, .rack-head .rname { display: none; }
+    .rack .rack-head .rlabel { display: inline; }
+    .rack-head .meta { font-size: 12.5px; }
+    .rack .rack-score { display: flex; }
     .rack .tile { max-width: 64px; }
     .rack .tile .c { min-width: 20px; height: 20px; font-size: 11.5px; border-radius: 10px; right: -6px; bottom: -6px; }
     .rack .tile.blank { height: 42px; font-size: 15px; }
@@ -274,6 +306,21 @@
   @keyframes nudge { 20%,60% { transform: translateX(-4px); } 40%,80% { transform: translateX(4px); } }
   .rack-head { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; font-size: 12px; font-weight: 700; letter-spacing: .06em; }
   .rack-head .disc-ico { width: 14px; height: 14px; }
+  .rack-head .rlabel { display: none; }
+  .rack-score {
+    display: none; align-items: center; gap: 14px;
+    padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--line);
+  }
+  .rack-score .disc-ico { width: 40px; height: 40px; }
+  .rack.active .rack-score .disc-ico::after {
+    content: ""; position: absolute; inset: -6px; border-radius: 50%;
+    border: 2px solid var(--gold); animation: ring 1.8s ease-in-out infinite;
+  }
+  .rs-who { min-width: 0; line-height: 1.3; }
+  .rs-who b { display: block; font-size: 17px; font-weight: 700; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rs-who span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .rs-total { margin-left: auto; font-family: var(--num); font-size: 52px; font-weight: 600; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .rs-total.bump { animation: bump .45s cubic-bezier(.2,.8,.2,1); }
   .rack-head .rname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .rack-head .meta { margin-left: auto; font-family: var(--num); font-weight: 500; font-size: 11px; color: var(--muted); letter-spacing: .04em; white-space: nowrap; }
   .rack-head .meta b { color: var(--text); font-weight: 600; }
@@ -508,12 +555,16 @@
         <div class="count" id="cntW">0</div>
       </div>
     </div>
-    <div class="status glass" id="status" role="status" aria-live="polite"></div>
+    <div class="hud-row">
+      <div class="status glass" id="status" role="status" aria-live="polite"></div>
+      <div class="chip glass"><div class="bar"><i id="bar2"></i></div><span>残り <b id="remain2">0</b> マス</span></div>
+    </div>
   </header>
 
   <main class="stage">
     <section class="rack glass" id="rackB" aria-label="黒の手駒">
-      <div class="rack-head"><span class="disc-ico b"></span><span class="rname">黒の手駒</span><span class="meta"></span></div>
+      <div class="rack-score"><span class="disc-ico b"></span><div class="rs-who"><b class="rs-name">黒</b><span class="rs-sub"></span></div><b class="rs-total">0</b></div>
+      <div class="rack-head"><span class="disc-ico b"></span><span class="rname">黒の手駒</span><span class="rlabel">手駒</span><span class="meta"></span></div>
       <div class="tiles"></div>
       <div class="rack-foot"></div>
     </section>
@@ -521,7 +572,8 @@
       <div id="board" role="grid" aria-label="盤面"></div>
     </div>
     <section class="rack glass" id="rackW" aria-label="白の手駒">
-      <div class="rack-head"><span class="disc-ico w"></span><span class="rname">白の手駒</span><span class="meta"></span></div>
+      <div class="rack-score"><span class="disc-ico w"></span><div class="rs-who"><b class="rs-name">白</b><span class="rs-sub"></span></div><b class="rs-total">0</b></div>
+      <div class="rack-head"><span class="disc-ico w"></span><span class="rname">白の手駒</span><span class="rlabel">手駒</span><span class="meta"></span></div>
       <div class="tiles"></div>
       <div class="rack-foot"></div>
     </section>
@@ -982,7 +1034,8 @@ function buildBoard() {
     bl.innerHTML = '0 <small>ブランク駒</small>';
     bl.addEventListener('click', () => onTile(p, 0));
     grid.appendChild(bl); tiles[0] = bl;
-    racks[p] = { root, tiles, meta: root.querySelector('.meta'), name: root.querySelector('.rname'), foot: root.querySelector('.rack-foot') };
+    racks[p] = { root, tiles, meta: root.querySelector('.meta'), name: root.querySelector('.rname'), foot: root.querySelector('.rack-foot'),
+                 total: root.querySelector('.rs-total'), sub: root.querySelector('.rs-sub'), rsName: root.querySelector('.rs-name') };
   }
 }
 
@@ -1021,20 +1074,21 @@ function render() {
   // スコア
   const sb = stats(BLACK), sw = stats(WHITE);
   for (const [p2, s, cnt, sub, side, name] of [[BLACK, sb, '#cntB', '#subB', '#sideB', '#nameB'], [WHITE, sw, '#cntW', '#subW', '#sideW', '#nameW']]) {
-    const el = $(cnt);
-    if (el.textContent !== fmt(s.total)) {
+    const R = racks[p2], bump = ui.lastScore[p2] !== s.total;
+    for (const el of [$(cnt), R.total]) {
       el.textContent = fmt(s.total);
-      if (ui.lastScore[p2] !== s.total) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
-      ui.lastScore[p2] = s.total;
+      if (bump) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
     }
-    $(sub).textContent = `盤 ${fmt(s.board)} ・ 手駒 ${fmt(s.hand)}`;
+    ui.lastScore[p2] = s.total;
+    $(sub).textContent = R.sub.textContent = `盤 ${fmt(s.board)} ・ 手駒 ${fmt(s.hand)}`;
+    R.rsName.textContent = playerLabel(p2);
     $(side).classList.toggle('active', !G.over && G.turn === p2);
     $(name).textContent = playerLabel(p2);
   }
   const scale = CONFIG[N].tiles.reduce((a, t) => a + t[0] * t[1], 0) / 2;
-  $('#bar').style.width = (50 + 50 * Math.tanh((sb.total - sw.total) / scale)) + '%';
+  $('#bar').style.width = $('#bar2').style.width = (50 + 50 * Math.tanh((sb.total - sw.total) / scale)) + '%';
   let empties = 0; for (const x of G.own) if (!x) empties++;
-  $('#remain').textContent = empties;
+  $('#remain').textContent = $('#remain2').textContent = empties;
 
   // 手駒
   for (const p2 of [BLACK, WHITE]) {
