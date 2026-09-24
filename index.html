@@ -1025,9 +1025,16 @@ function aiChoose(level) {
 }
 
 // ===== サウンド（WebAudio 合成）=====
+// iPhone のマナーモードでも鳴らす（Safari 16.4 以降）。
+// 'playback' にすると音楽アプリの曲が止まるので、アプリの音がオンのときだけにする。
+function setAudioSession(soundOn) {
+  try { if (navigator.audioSession) navigator.audioSession.type = soundOn ? 'playback' : 'auto'; } catch { /* 対応していない */ }
+}
+
 const Sound = {
   on: true, ctx: null,
   ensure() {
+    if (!this.ctx || this.ctx.state === 'suspended') setAudioSession(this.on);
     if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
     if (this.ctx.state === 'suspended') this.ctx.resume();
     return this.ctx;
@@ -1075,6 +1082,7 @@ const Sound = {
 let settings = { mode: 'cpu', human: 1, level: 'normal', N: 6, ...store.get('settings', {}) };
 let prefs = { hints: true, sound: true, ...store.get('prefs', {}) };
 Sound.on = prefs.sound;
+setAudioSession(prefs.sound);
 
 let G = null;
 const ui = { sel: null, pending: null, hover: null, cpuSel: null, thinking: false, cpuTimer: 0, pointer: 'mouse', lastScore: { 1: 0, 2: 0 } };
@@ -1489,7 +1497,7 @@ function toggleHints() {
 
 $('#bUndo').onclick = undo;
 $('#bHint').onclick = toggleHints;
-$('#bSound').onclick = () => { prefs.sound = Sound.on = !prefs.sound; store.set('prefs', prefs); syncDock(); if (prefs.sound) Sound.select(); };
+$('#bSound').onclick = () => { prefs.sound = Sound.on = !prefs.sound; setAudioSession(prefs.sound); store.set('prefs', prefs); syncDock(); if (prefs.sound) Sound.select(); };
 $('#bHelp').onclick = () => openOv('#ov-help');
 $('#bMenu').onclick = openMenu;
 $('#bStart').onclick = () => { closeOv('#ov-menu'); closeOv('#ov-result'); newGame(); };
