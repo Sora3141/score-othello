@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07110d">
+<title>点数オセロ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #040907;
+    --bg-1: #0b1a14;
+    --bg-2: #14352a;
+    --panel: rgba(13, 26, 21, .68);
+    --line: rgba(255, 255, 255, .08);
+    --line-2: rgba(255, 255, 255, .16);
+    --text: #eef4f0;
+    --muted: #93a99f;
+    --faint: #5f746b;
+    --gold: #f2c66d;
+    --gold-soft: rgba(242, 198, 109, .16);
+    --red: #ef6a4c;
+    --felt: #1e6a4c;
+    --ink: #0a1410;
+    --font: "Zen Kaku Gothic New", -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif;
+    --num: "Outfit", -apple-system, "Helvetica Neue", sans-serif;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --n: 6;
+    --bs: max(240px, min(calc(100vw - 32px), calc(100vh - 390px), 520px));
+    --bs: max(240px, min(calc(100vw - 32px), calc(100dvh - 390px), 520px));
+    --cs: calc(var(--bs) / var(--n));
+    color-scheme: dark;
+  }
+  @media (min-width: 980px) {
+    :root {
+      --bs: max(300px, min(calc(100vh - 250px), calc(100vw - 580px), 640px));
+      --bs: max(300px, min(calc(100dvh - 250px), calc(100vw - 580px), 640px));
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; min-height: 100%;
+    font-family: var(--font); color: var(--text);
+    background: radial-gradient(120% 80% at 50% 42%, var(--bg-2) 0%, var(--bg-1) 45%, var(--bg-0) 100%) fixed;
+    background-color: var(--bg-0);
+    -webkit-font-smoothing: antialiased;
+    user-select: none; -webkit-user-select: none;
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background: radial-gradient(90% 70% at 50% 45%, transparent 55%, rgba(0,0,0,.45) 100%);
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .glass {
+    background: var(--panel);
+    backdrop-filter: blur(16px) saturate(1.25); -webkit-backdrop-filter: blur(16px) saturate(1.25);
+    border: 1px solid var(--line);
+    box-shadow: 0 12px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+
+  .app {
+    position: relative; z-index: 2;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    padding: calc(14px + var(--safe-t)) 16px calc(96px + var(--safe-b));
+  }
+
+  /* ---------- brand ---------- */
+  .brand { position: fixed; top: calc(20px + var(--safe-t)); left: 24px; z-index: 5; pointer-events: none; }
+  .brand .en { font-family: var(--num); font-weight: 600; letter-spacing: .32em; font-size: 11px; color: var(--gold); }
+  .brand .ja { font-weight: 700; font-size: 17px; letter-spacing: .06em; margin-top: 3px; }
+
+  /* ---------- scoreboard ---------- */
+  .hud-top { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+  .score {
+    display: grid; grid-template-columns: 1fr 132px 1fr; align-items: center; gap: 14px;
+    padding: 10px 16px; border-radius: 22px;
+    width: min(560px, 100%);
+  }
+  .side { display: flex; align-items: center; gap: 11px; min-width: 0; transition: opacity .3s; }
+  .side.white { flex-direction: row-reverse; text-align: right; }
+  .side:not(.active) { opacity: .62; }
+  .disc-ico { width: 30px; height: 30px; border-radius: 50%; position: relative; flex: none; display: inline-block; }
+  .disc-ico.b { background: radial-gradient(circle at 34% 28%, #545454, #101010 62%); box-shadow: 0 3px 8px rgba(0,0,0,.6), inset 0 -2px 3px rgba(0,0,0,.7); }
+  .disc-ico.w { background: radial-gradient(circle at 34% 28%, #ffffff, #d9d3c7 70%); box-shadow: 0 3px 8px rgba(0,0,0,.5), inset 0 -2px 3px rgba(0,0,0,.18); }
+  .side.active .disc-ico::after {
+    content: ""; position: absolute; inset: -5px; border-radius: 50%;
+    border: 2px solid var(--gold); animation: ring 1.8s ease-in-out infinite;
+  }
+  @keyframes ring { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: .45; } }
+  .who { min-width: 0; line-height: 1.25; }
+  .who b { display: block; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .who span { display: block; font-size: 11px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .count {
+    font-family: var(--num); font-size: 32px; font-weight: 600; font-variant-numeric: tabular-nums;
+    line-height: 1; margin-left: auto; letter-spacing: -.01em; transition: color .3s;
+  }
+  .side.white .count { margin-left: 0; margin-right: auto; }
+  .count.bump { animation: bump .45s cubic-bezier(.2,.8,.2,1); }
+  @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
+  .mid { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .bar { position: relative; height: 6px; width: 100%; border-radius: 6px; background: #e8e2d6; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,.22); }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; background: linear-gradient(90deg, #050505, #2a2a2a); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  .bar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--gold); opacity: .7; }
+  .remain { font-family: var(--num); font-size: 11px; color: var(--muted); letter-spacing: .06em; }
+  .remain b { color: var(--text); font-weight: 600; }
+
+  .status {
+    font-size: 13px; padding: 7px 14px; border-radius: 999px; color: var(--text);
+    display: flex; align-items: center; gap: 8px; min-height: 32px; max-width: 100%;
+    transition: background .2s;
+  }
+  .status .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .status .dot.b { background: radial-gradient(circle at 35% 30%, #666, #0c0c0c 70%); box-shadow: 0 0 0 1px rgba(255,255,255,.35); }
+  .status .dot.w { background: #f3eee4; box-shadow: 0 0 6px rgba(255,255,255,.4); }
+  .status .dot.g { width: 8px; height: 8px; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+  .status small { color: var(--muted); font-size: 12px; }
+  .status.clickable { cursor: pointer; }
+  .status.clickable:hover { background: rgba(30, 50, 42, .8); }
+  .thinking::after { content: ""; display: inline-block; width: 1.2em; text-align: left; animation: dots 1.2s steps(4) infinite; }
+  @keyframes dots { 0% { content: ""; } 25% { content: "・"; } 50% { content: "・・"; } 75% { content: "・・・"; } }
+
+  /* ---------- stage ---------- */
+  .stage {
+    flex: 1; width: 100%;
+    display: grid; align-items: center; justify-content: center;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "board board" "rb rw";
+    align-content: center;
+    gap: 14px 10px;
+    max-width: calc(var(--bs) + 40px);
+  }
+  @media (min-width: 980px) {
+    .stage {
+      max-width: none;
+      grid-template-columns: 1fr auto 1fr;
+      grid-template-areas: "rb board rw";
+      gap: 32px;
+    }
+    #rackB { justify-self: end; }
+    #rackW { justify-self: start; }
+  }
+
+  /* ---------- board ---------- */
+  .board-wrap {
+    grid-area: board; justify-self: center; position: relative;
+    padding: calc(var(--bs) * .026 + 4px); border-radius: 20px;
+    background: linear-gradient(150deg, #1b3128 0%, #0f1d18 55%, #0a1410 100%);
+    box-shadow: 0 34px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  #board {
+    position: relative; width: var(--bs); height: var(--bs);
+    display: grid; grid-template-columns: repeat(var(--n), 1fr); grid-template-rows: repeat(var(--n), 1fr);
+    gap: 2px; padding: 2px; border-radius: 10px; overflow: hidden;
+    background: #081410;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.4);
+  }
+  .star {
+    position: absolute; width: 7px; height: 7px; border-radius: 50%; background: #081410;
+    transform: translate(-50%, -50%); z-index: 3; pointer-events: none;
+  }
+  .cell {
+    position: relative; display: grid; place-items: center;
+    background: radial-gradient(130% 130% at 30% 20%, #25805c 0%, var(--felt) 55%, #185a40 100%);
+    transition: background .15s;
+  }
+  .cell.valid { cursor: pointer; }
+  .cell.valid:hover, .cell.pending { background: radial-gradient(130% 130% at 30% 20%, #2e9068 0%, #237657 60%, #1b6448 100%); }
+  .cell.pending::before {
+    content: ""; position: absolute; inset: 3px; border-radius: 6px; z-index: 2; pointer-events: none;
+    border: 2px dashed rgba(242,198,109,.8);
+  }
+  .cell .dot {
+    width: 18%; height: 18%; border-radius: 50%; background: var(--gold); opacity: 0; transform: scale(.4);
+    box-shadow: 0 0 10px rgba(242,198,109,.7); transition: opacity .2s, transform .2s; pointer-events: none;
+  }
+  .cell.valid .dot { opacity: .75; transform: none; }
+  .cell.valid.hinted .dot { opacity: 0; }
+  .cell .hint {
+    position: absolute; font-family: var(--num); font-weight: 600; font-size: calc(var(--cs) * .25);
+    color: var(--gold); opacity: 0; pointer-events: none; transition: opacity .2s; letter-spacing: -.02em;
+    padding: .1em .45em; border-radius: 999px; background: rgba(4,12,9,.35);
+  }
+  .cell .hint.neg { color: #ff9a82; }
+  .cell .hint.zero { color: var(--muted); }
+  .cell.valid.hinted .hint { opacity: 1; }
+  .cell.has .dot, .cell.has .hint { opacity: 0 !important; }
+  .cell.last::after {
+    content: ""; position: absolute; top: 7%; right: 7%; width: max(5px, calc(var(--cs) * .1)); height: max(5px, calc(var(--cs) * .1));
+    border-radius: 50%; background: var(--red); box-shadow: 0 0 6px rgba(239,106,76,.8); z-index: 4; pointer-events: none;
+  }
+
+  .dw { position: absolute; inset: 8%; perspective: 500px; pointer-events: none; display: none; }
+  .cell.has .dw { display: block; }
+  .cell.ghost .dw { opacity: .7; filter: saturate(.8); }
+  .dw.drop { animation: drop .34s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes drop { 0% { transform: scale(1.35) translateY(-8%); opacity: 0; } 60% { opacity: 1; } 100% { transform: none; } }
+  .dw.lift { animation: lift .55s ease-in-out both; }
+  @keyframes lift { 0%,100% { transform: none; } 50% { transform: scale(1.14); } }
+  .disc { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.35,.6,.3,1); }
+  .cell.w .disc { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0; border-radius: 50%;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    display: grid; place-items: center;
+    font-family: var(--num); font-weight: 700; font-size: calc(var(--cs) * .36); letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .face::before { content: ""; position: absolute; inset: 15%; border-radius: 50%; }
+  .face.b { background: radial-gradient(circle at 34% 28%, #5a5a5a, #121212 62%); box-shadow: 0 3px 6px rgba(0,0,0,.55), inset 0 -2px 4px rgba(0,0,0,.7); }
+  .face.b::before { border: 1px solid rgba(255,255,255,.07); }
+  .face.w { transform: rotateY(180deg); background: radial-gradient(circle at 34% 28%, #ffffff, #d9d3c7 70%); box-shadow: 0 3px 6px rgba(0,0,0,.45), inset 0 -2px 4px rgba(0,0,0,.18); }
+  .face.w::before { border: 1px solid rgba(0,0,0,.07); }
+  .face span { position: relative; }
+  .pos .face.b { color: var(--gold); }
+  .neg .face.b { color: #ff7d60; }
+  .zero .face.b { color: #6f7f78; }
+  .pos .face.w { color: #946310; }
+  .neg .face.w { color: #cf3f24; }
+  .zero .face.w { color: #aaa398; }
+  .cell.pv .dw::after {
+    content: ""; position: absolute; inset: -4%; border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgba(242,198,109,.65);
+    animation: pvPulse 1s ease-in-out infinite;
+  }
+  @keyframes pvPulse { 50% { box-shadow: 0 0 0 2px rgba(242,198,109,.5), 0 0 6px rgba(242,198,109,.3); } }
+
+  .float {
+    position: absolute; z-index: 6; pointer-events: none; transform: translate(-50%, -50%);
+    font-family: var(--num); font-weight: 700; font-size: max(16px, calc(var(--cs) * .42));
+    color: var(--gold); text-shadow: 0 2px 10px rgba(0,0,0,.7);
+    animation: floatUp 1.2s cubic-bezier(.2,.8,.2,1) forwards;
+  }
+  .float.neg { color: #ff7d60; }
+  .float.zero { color: var(--muted); }
+  @keyframes floatUp { 0% { opacity: 0; transform: translate(-50%, -20%) scale(.7); } 20% { opacity: 1; transform: translate(-50%, -70%) scale(1.05); } 100% { opacity: 0; transform: translate(-50%, -160%) scale(1); } }
+
+  /* ---------- racks ---------- */
+  .rack {
+    width: 100%; padding: 12px 12px 14px; border-radius: 18px;
+    transition: opacity .3s, border-color .3s, box-shadow .3s;
+  }
+  #rackB { grid-area: rb; }
+  #rackW { grid-area: rw; }
+  @media (min-width: 980px) { .rack { width: 212px; padding: 14px 16px 16px; } }
+  .rack:not(.active) { opacity: .55; }
+  .rack.active { border-color: rgba(242,198,109,.38); box-shadow: 0 12px 32px rgba(0,0,0,.35), 0 0 24px rgba(242,198,109,.08), inset 0 1px 0 rgba(255,255,255,.05); }
+  .rack.nudge { animation: nudge .4s; }
+  @keyframes nudge { 20%,60% { transform: translateX(-4px); } 40%,80% { transform: translateX(4px); } }
+  .rack-head { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; font-size: 12px; font-weight: 700; letter-spacing: .06em; }
+  .rack-head .disc-ico { width: 14px; height: 14px; }
+  .rack-head .rname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .rack-head .meta { margin-left: auto; font-family: var(--num); font-weight: 500; font-size: 11px; color: var(--muted); letter-spacing: .04em; white-space: nowrap; }
+  .rack-head .meta b { color: var(--text); font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(var(--k), 1fr); gap: 7px; }
+  @media (min-width: 980px) { .tiles { gap: 10px; } }
+  .tile {
+    position: relative; aspect-ratio: 1; border-radius: 50%; max-width: 44px; width: 100%; justify-self: center;
+    display: grid; place-items: center;
+    font-family: var(--num); font-weight: 700; font-size: clamp(11px, 3.2vw, 16px); letter-spacing: -.02em;
+    transition: transform .15s, box-shadow .15s, opacity .2s;
+  }
+  .tile.b { background: radial-gradient(circle at 34% 28%, #5a5a5a, #121212 62%); box-shadow: 0 3px 7px rgba(0,0,0,.55), inset 0 -2px 3px rgba(0,0,0,.7); }
+  .tile.w { background: radial-gradient(circle at 34% 28%, #fff, #d9d3c7 70%); box-shadow: 0 3px 7px rgba(0,0,0,.45), inset 0 -2px 3px rgba(0,0,0,.18); }
+  .tile.b.pos { color: var(--gold); } .tile.b.neg { color: #ff7d60; } .tile.b.zero { color: #8a9a93; }
+  .tile.w.pos { color: #946310; } .tile.w.neg { color: #cf3f24; } .tile.w.zero { color: #8f887c; }
+  .tile .c {
+    position: absolute; right: -5px; bottom: -5px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px;
+    display: grid; place-items: center; font-size: 10px; font-weight: 600; color: var(--text);
+    background: #0f1e19; border: 1px solid var(--line-2);
+  }
+  .tile:not(:disabled):hover { transform: translateY(-2px); }
+  .tile.sel { transform: translateY(-3px); box-shadow: 0 0 0 2px var(--gold), 0 0 18px rgba(242,198,109,.55), 0 6px 12px rgba(0,0,0,.5); }
+  .tile.gone { background: none; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.1); color: var(--faint) !important; }
+  .tile.gone .c { display: none; }
+  .tile:disabled { cursor: default; }
+  .tile.blank { grid-column: 1 / -1; aspect-ratio: auto; max-width: none; height: 34px; border-radius: 999px; font-size: 13px; gap: 6px; display: flex; justify-content: center; align-items: center; }
+  .tile.blank small { font-family: var(--font); font-weight: 500; font-size: 11px; opacity: .8; }
+  .rack-foot { margin-top: 10px; font-size: 11px; color: var(--faint); line-height: 1.5; display: none; }
+  @media (min-width: 980px) { .rack-foot { display: block; } }
+
+  /* ---------- dock ---------- */
+  .dock {
+    position: fixed; left: 50%; bottom: calc(16px + var(--safe-b)); transform: translateX(-50%); z-index: 5;
+    display: flex; gap: 2px; padding: 6px; border-radius: 20px;
+  }
+  .dock button {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    min-width: 60px; height: 54px; padding: 0 6px; border-radius: 14px;
+    color: var(--muted); font-size: 11px; letter-spacing: .02em;
+    transition: background .15s, color .15s, transform .1s;
+  }
+  .dock button:hover { background: rgba(255,255,255,.06); color: var(--text); }
+  .dock button:active { transform: scale(.94); }
+  .dock button[aria-pressed="true"] { color: var(--gold); }
+  .dock button:disabled { opacity: .35; pointer-events: none; }
+  .dock .sep { width: 1px; margin: 10px 4px; background: var(--line-2); }
+  .dock svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- toast / tip ---------- */
+  .toast {
+    position: fixed; left: 50%; top: 42%; z-index: 8;
+    transform: translate(-50%, -8px); opacity: 0; pointer-events: none;
+    padding: 11px 18px; border-radius: 14px; font-size: 14px; font-weight: 500;
+    transition: opacity .25s, transform .25s; white-space: nowrap;
+    border-color: rgba(242,198,109,.35);
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .tip {
+    position: fixed; z-index: 7; pointer-events: none; left: 0; top: 0;
+    padding: 5px 10px; border-radius: 10px; font-family: var(--num); font-weight: 600; font-size: 13px;
+    color: var(--ink); background: var(--gold); box-shadow: 0 6px 16px rgba(0,0,0,.35);
+    opacity: 0; transition: opacity .12s; white-space: nowrap; transform: translate(-50%, -100%);
+  }
+  .tip.neg { background: #ff8f75; }
+  .tip.zero { background: #d8e0dc; }
+  .tip small { font-family: var(--font); font-weight: 500; font-size: 11px; opacity: .75; margin-left: 4px; }
+  .tip.show { opacity: 1; }
+
+  /* ---------- overlays ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 20;
+    display: grid; place-items: center; padding: 20px;
+    background: rgba(2, 7, 5, .55);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    opacity: 0; transition: opacity .22s;
+  }
+  .overlay.show { opacity: 1; }
+  .sheet {
+    width: min(440px, 100%); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow: auto;
+    padding: 28px 26px 22px; border-radius: 24px;
+    background: rgba(12, 24, 19, .9);
+    backdrop-filter: blur(22px) saturate(1.2); -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    border: 1px solid var(--line-2);
+    box-shadow: 0 30px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+    transform: translateY(10px) scale(.985); transition: transform .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .overlay.show .sheet { transform: none; }
+  .sheet.wide { width: min(580px, 100%); }
+  .sheet.center { text-align: center; }
+  .eyebrow { font-family: var(--num); font-weight: 600; font-size: 11px; letter-spacing: .34em; color: var(--gold); }
+  .sheet h1 { margin: 8px 0 8px; font-size: 30px; letter-spacing: .06em; font-weight: 700; }
+  .sheet h2 { margin: 8px 0 14px; font-size: 24px; letter-spacing: .04em; }
+  .sheet h3 { margin: 22px 0 10px; font-size: 13px; color: var(--muted); letter-spacing: .12em; font-weight: 500; }
+  .lead { margin: 0 0 20px; color: var(--muted); font-size: 13.5px; line-height: 1.75; }
+  .field { margin-bottom: 14px; }
+  .field > label { display: block; font-size: 11.5px; color: var(--muted); margin: 0 0 7px 2px; letter-spacing: .08em; }
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; padding: 4px; border-radius: 13px; background: rgba(255,255,255,.05); border: 1px solid var(--line); }
+  .seg button {
+    padding: 9px 6px; border-radius: 10px; font-size: 13.5px; color: var(--muted); font-weight: 500;
+    display: flex; flex-direction: column; align-items: center; gap: 1px; line-height: 1.3;
+    transition: background .15s, color .15s;
+  }
+  .seg button small { font-family: var(--num); font-size: 10.5px; opacity: .7; }
+  .seg button:hover { color: var(--text); }
+  .seg button.on { background: #f1ece2; color: var(--ink); font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .seg .mini { display: inline-block; width: 11px; height: 11px; border-radius: 50%; vertical-align: -1px; margin-right: 5px; }
+  .seg .mini.b { background: #111; box-shadow: 0 0 0 1px #777; }
+  .seg .mini.w { background: #f3eee4; box-shadow: 0 0 0 1px #999; }
+  .seg .row { display: flex; align-items: center; }
+  .primary {
+    display: block; width: 100%; margin-top: 20px; padding: 14px; border-radius: 14px;
+    background: linear-gradient(180deg, #f7d488, #e9b85a); color: #1d1405; font-weight: 700; font-size: 15px; letter-spacing: .08em;
+    box-shadow: 0 8px 22px rgba(233,184,90,.28), inset 0 1px 0 rgba(255,255,255,.45);
+    transition: transform .1s, filter .15s;
+  }
+  .primary:hover { filter: brightness(1.05); }
+  .primary:active { transform: scale(.985); }
+  .row2 { display: flex; gap: 8px; margin-top: 8px; }
+  .ghost-btn {
+    flex: 1; padding: 12px; border-radius: 13px; font-size: 13.5px; color: var(--text);
+    background: rgba(255,255,255,.05); border: 1px solid var(--line);
+    transition: background .15s;
+  }
+  .ghost-btn:hover { background: rgba(255,255,255,.1); }
+
+  .rules { margin: 0; padding: 0; list-style: none; counter-reset: r; }
+  .rules li { counter-increment: r; position: relative; padding: 0 0 14px 38px; font-size: 13.5px; line-height: 1.75; color: var(--muted); }
+  .rules li b { color: var(--text); display: block; font-size: 14px; }
+  .rules li em { font-style: normal; color: var(--gold); }
+  .rules li::before {
+    content: counter(r); position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 50%;
+    display: grid; place-items: center; font-family: var(--num); font-weight: 600; font-size: 13px;
+    background: var(--gold-soft); color: var(--gold);
+  }
+  .figure { display: flex; gap: 14px; align-items: center; padding: 14px; margin: 4px 0 6px; border-radius: 14px; background: rgba(0,0,0,.22); border: 1px solid var(--line); }
+  .figure svg { flex: none; width: 220px; height: auto; }
+  .figure p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .figure p b { color: var(--text); font-weight: 500; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0; font-size: 13px; }
+  .keys dt { color: var(--text); white-space: nowrap; }
+  .keys dt kbd { font-family: var(--num); font-size: 11.5px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--line-2); background: rgba(255,255,255,.05); }
+  .keys dd { margin: 0; color: var(--muted); }
+
+  .res-score { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 6px 0 12px; }
+  .res-score > div { display: flex; align-items: center; gap: 12px; }
+  .res-score b { font-family: var(--num); font-size: 48px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .res-score .disc-ico { width: 36px; height: 36px; }
+  .res-score .vs { color: var(--faint); font-family: var(--num); font-size: 22px; }
+  .res-bar { position: relative; height: 8px; border-radius: 8px; background: #e8e2d6; overflow: hidden; margin: 0 auto 18px; max-width: 300px; box-shadow: 0 0 0 1px rgba(255,255,255,.22); }
+  .res-bar i { display: block; height: 100%; background: #111; width: 50%; transition: width 1s cubic-bezier(.2,.8,.2,1); }
+  .res-bar::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--gold); opacity: .8; }
+  .res-table {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; margin: 0 auto 16px; max-width: 300px;
+    font-size: 13px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line);
+  }
+  .res-table > div { padding: 7px 10px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  .res-table > div:nth-child(-n+3) { border-top: 0; background: rgba(255,255,255,.04); color: var(--muted); font-size: 11.5px; }
+  .res-table > div:nth-child(3n+1) { color: var(--muted); text-align: left; }
+  .res-table .n { font-family: var(--num); font-weight: 600; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1100px) { .brand { display: none; } }
+  @media (max-width: 760px) {
+    .score { grid-template-columns: 1fr 88px 1fr; gap: 10px; padding: 9px 12px; border-radius: 18px; }
+    .count { font-size: 26px; }
+    .disc-ico { width: 24px; height: 24px; }
+    .who b { font-size: 13px; }
+    .dock button { min-width: 48px; height: 50px; font-size: 10px; }
+    .dock .sep { margin: 10px 2px; }
+    .toast { font-size: 13px; white-space: normal; text-align: center; width: max-content; max-width: calc(100vw - 32px); }
+    .sheet { padding: 22px 18px 18px; border-radius: 20px; }
+    .sheet h1 { font-size: 24px; }
+    .figure { flex-direction: column; }
+    .rack-head { font-size: 11px; margin-bottom: 8px; }
+    .rack-head .meta { font-size: 10px; }
+    .tiles { gap: 9px 7px; }
+    .tile .c { min-width: 13px; height: 13px; padding: 0 2px; right: -7px; bottom: -7px; font-size: 8.5px; border-radius: 7px; }
+  }
+  @media (max-width: 420px) {
+    .dock button span { display: none; }
+    .dock button { height: 44px; min-width: 44px; }
+    .who span { font-size: 10px; }
+    .app { gap: 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .side.active .disc-ico::after, .cell.pv .dw::after { animation: none; }
+    .disc { transition-duration: .01s; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <div class="en">SCORE OTHELLO</div>
+  <div class="ja">点数オセロ</div>
+</div>
+
+<div class="app">
+  <header class="hud-top">
+    <div class="score glass">
+      <div class="side black" id="sideB">
+        <span class="disc-ico b"></span>
+        <div class="who"><b id="nameB">黒</b><span id="subB"></span></div>
+        <div class="count" id="cntB">0</div>
+      </div>
+      <div class="mid">
+        <div class="bar"><i id="bar"></i></div>
+        <div class="remain">残り <b id="remain">0</b> マス</div>
+      </div>
+      <div class="side white" id="sideW">
+        <span class="disc-ico w"></span>
+        <div class="who"><b id="nameW">白</b><span id="subW"></span></div>
+        <div class="count" id="cntW">0</div>
+      </div>
+    </div>
+    <div class="status glass" id="status" role="status" aria-live="polite"></div>
+  </header>
+
+  <main class="stage">
+    <section class="rack glass" id="rackB" aria-label="黒の手駒">
+      <div class="rack-head"><span class="disc-ico b"></span><span class="rname">黒の手駒</span><span class="meta"></span></div>
+      <div class="tiles"></div>
+      <div class="rack-foot"></div>
+    </section>
+    <div class="board-wrap">
+      <div id="board" role="grid" aria-label="盤面"></div>
+    </div>
+    <section class="rack glass" id="rackW" aria-label="白の手駒">
+      <div class="rack-head"><span class="disc-ico w"></span><span class="rname">白の手駒</span><span class="meta"></span></div>
+      <div class="tiles"></div>
+      <div class="rack-foot"></div>
+    </section>
+  </main>
+</div>
+
+<nav class="dock glass" aria-label="操作">
+  <button id="bUndo" title="一手戻す (⌘/Ctrl+Z)">
+    <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span>戻す</span>
+  </button>
+  <button id="bHint" aria-pressed="true" title="置いたときの点の増減を表示 (H)">
+    <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21.5h4"/><path d="M12 2.5a6.5 6.5 0 0 0-3.8 11.8c.5.4.8 1 .8 1.7V18h6v-2c0-.7.3-1.3.8-1.7A6.5 6.5 0 0 0 12 2.5z"/></svg><span>ヒント</span>
+  </button>
+  <button id="bSound" aria-pressed="true" title="サウンド">
+    <svg viewBox="0 0 24 24" id="icoSound"></svg><span>サウンド</span>
+  </button>
+  <div class="sep"></div>
+  <button id="bHelp" title="ルール (?)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.4 9.3a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.3-2.6 4"/><path d="M12 17.4h.01"/></svg><span>ルール</span>
+  </button>
+  <button id="bMenu" title="メニュー">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>メニュー</span>
+  </button>
+</nav>
+
+<div class="toast glass" id="toast"></div>
+<div class="tip" id="tip"></div>
+
+<!-- menu -->
+<div class="overlay" id="ov-menu" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="menuTitle">
+    <div class="eyebrow">SCORE OTHELLO</div>
+    <h1 id="menuTitle">点数オセロ</h1>
+    <p class="lead">石の一つひとつに点数がついたオセロ。はさんだ石は数字をそのままに色だけが変わります。石の数ではなく、<b style="color:var(--text)">自分の色の数字の合計</b>で勝負。</p>
+    <div class="field">
+      <label>対戦</label>
+      <div class="seg" data-key="mode">
+        <button data-v="cpu">CPUと対戦</button>
+        <button data-v="pvp">ふたりで対戦</button>
+      </div>
+    </div>
+    <div class="field cpu-only">
+      <label>あなたの石</label>
+      <div class="seg" data-key="human">
+        <button data-v="1"><span class="row"><span class="mini b"></span>黒</span><small>先手</small></button>
+        <button data-v="2"><span class="row"><span class="mini w"></span>白</span><small>後手</small></button>
+      </div>
+    </div>
+    <div class="field cpu-only">
+      <label>CPUの強さ</label>
+      <div class="seg" data-key="level">
+        <button data-v="easy">やさしい</button>
+        <button data-v="normal">ふつう</button>
+        <button data-v="hard">つよい</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>盤の大きさ</label>
+      <div class="seg" data-key="N">
+        <button data-v="4">4×4<small>手駒 6枚</small></button>
+        <button data-v="6">6×6<small>手駒 16枚</small></button>
+        <button data-v="8">8×8<small>手駒 30枚</small></button>
+      </div>
+    </div>
+    <button class="primary" id="bStart">対局をはじめる</button>
+    <div class="row2">
+      <button class="ghost-btn" id="bResume">対局に戻る</button>
+      <button class="ghost-btn" id="bRules">ルール</button>
+    </div>
+  </div>
+</div>
+
+<!-- help -->
+<div class="overlay" id="ov-help" hidden>
+  <div class="sheet wide" role="dialog" aria-labelledby="helpTitle">
+    <div class="eyebrow">HOW TO PLAY</div>
+    <h2 id="helpTitle">ルール</h2>
+    <ol class="rules">
+      <li><b>数字つきの手駒で打つ</b>ふたりとも同じ手駒を持ちます（6×6 なら <em>+1〜+4</em> と <em>−1〜−4</em> を各2枚、合計0点）。手番では手駒を1枚選び、通常のオセロと同じく相手の石をはさめるマスに置きます。中央の4石は0点です。</li>
+      <li><b>はさむと色だけが変わる</b>はさまれた石は数字はそのままで、あなたの色になります。相手の <em>+3</em> を返せば +3 点、相手の <em>−3</em> を返してしまうと −3 点。はさめる石はすべて返るので、返したくない石も返ることがあります。</li>
+      <li><b>得点 ＝ 自分の色の石 ＋ 残った手駒</b>盤上の自分の色の数字と、まだ手元にある手駒の数字の合計が得点です。スタートは 0 対 0。手駒を盤に出しても点は変わらず、<em>点が動くのは石を返したときだけ</em>です。</li>
+      <li><b>作戦のコツ</b>プラスの駒は角や辺など<em>返されにくい場所</em>へ。マイナスの駒は相手が<em>返さざるを得ない場所</em>へ置いて押しつけましょう。</li>
+      <li><b>パスと終局</b>置ける場所がなければ自動でパス。両者とも置けなくなったら終局し、得点の高い方が勝ち。同点なら石の多い方が勝ちです。手駒を使い切ったあとは 0点の「ブランク駒」を何枚でも使えます。</li>
+    </ol>
+    <div class="figure">
+      <svg viewBox="0 0 220 112" aria-hidden="true" font-family="Outfit, sans-serif" font-weight="700">
+        <defs>
+          <radialGradient id="gB" cx=".34" cy=".28" r=".75"><stop offset="0" stop-color="#5a5a5a"/><stop offset=".8" stop-color="#121212"/></radialGradient>
+          <radialGradient id="gW" cx=".34" cy=".28" r=".75"><stop offset="0" stop-color="#fff"/><stop offset=".9" stop-color="#d9d3c7"/></radialGradient>
+        </defs>
+        <g fill="#1e6a4c" stroke="#081410" stroke-width="2">
+          <rect x="4" y="4" width="34" height="34"/><rect x="38" y="4" width="34" height="34"/><rect x="72" y="4" width="34" height="34"/>
+          <rect x="114" y="4" width="34" height="34"/><rect x="148" y="4" width="34" height="34"/><rect x="182" y="4" width="34" height="34"/>
+        </g>
+        <circle cx="21" cy="21" r="13" fill="url(#gB)" stroke="#f2c66d" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="21" y="25.5" font-size="12" text-anchor="middle" fill="#f2c66d">+2</text>
+        <circle cx="55" cy="21" r="13" fill="url(#gW)"/><text x="55" y="25.5" font-size="12" text-anchor="middle" fill="#cf3f24">−3</text>
+        <circle cx="89" cy="21" r="13" fill="url(#gB)"/><text x="89" y="25.5" font-size="12" text-anchor="middle" fill="#f2c66d">+1</text>
+        <path d="M107 21h5m-3-3 3 3-3 3" stroke="#93a99f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <circle cx="131" cy="21" r="13" fill="url(#gB)"/><text x="131" y="25.5" font-size="12" text-anchor="middle" fill="#f2c66d">+2</text>
+        <circle cx="165" cy="21" r="13" fill="url(#gB)" stroke="#f2c66d" stroke-width="1.5"/><text x="165" y="25.5" font-size="12" text-anchor="middle" fill="#ff7d60">−3</text>
+        <circle cx="199" cy="21" r="13" fill="url(#gB)"/><text x="199" y="25.5" font-size="12" text-anchor="middle" fill="#f2c66d">+1</text>
+        <text x="55" y="58" font-size="11" text-anchor="middle" fill="#93a99f" font-weight="500">黒が +2 を置くと…</text>
+        <text x="165" y="58" font-size="11" text-anchor="middle" fill="#ff7d60" font-weight="600">−3 を引き取って 黒 −3点</text>
+        <g fill="#1e6a4c" stroke="#081410" stroke-width="2">
+          <rect x="4" y="72" width="34" height="34"/><rect x="38" y="72" width="34" height="34"/><rect x="72" y="72" width="34" height="34"/>
+        </g>
+        <circle cx="21" cy="89" r="13" fill="url(#gW)"/><text x="21" y="93.5" font-size="12" text-anchor="middle" fill="#946310">+4</text>
+        <circle cx="55" cy="89" r="13" fill="url(#gB)"/><text x="55" y="93.5" font-size="12" text-anchor="middle" fill="#ff7d60">−2</text>
+        <circle cx="89" cy="89" r="6" fill="#f2c66d" opacity=".75"/>
+        <text x="114" y="86" font-size="11" fill="#93a99f" font-weight="500">白がここに置くと</text>
+        <text x="114" y="101" font-size="11" fill="#ff7d60" font-weight="600">−2 を引き取ってしまう</text>
+      </svg>
+      <p><b>返すことが得とは限りません。</b>相手のマイナスをはさむと、その点ごと引き取ることになります。盤のマスに表示される数字（ヒント）は、そこに置いたときに<b>あなたの点がいくつ動くか</b>です。</p>
+    </div>
+    <h3>操作</h3>
+    <dl class="keys">
+      <dt>手駒 → マス</dt><dd>手駒を選んでから、光るマスをクリックして置く</dd>
+      <dt>マス → 手駒</dt><dd>先にマスを選んで（点線枠）、あとから手駒を選んでも置けます</dd>
+      <dt>ホバー</dt><dd>返る石が光り、点の増減が表示されます</dd>
+      <dt><kbd>1</kbd>〜<kbd>5</kbd></dt><dd>+の手駒を選ぶ（<kbd>Shift</kbd> 併用で −）、<kbd>0</kbd> でブランク駒</dd>
+      <dt><kbd>⌘/Ctrl</kbd>+<kbd>Z</kbd></dt><dd>一手戻す</dd>
+      <dt><kbd>H</kbd> / <kbd>Esc</kbd></dt><dd>ヒント切替 / 選択解除</dd>
+    </dl>
+    <button class="primary" data-close>閉じる</button>
+  </div>
+</div>
+
+<!-- result -->
+<div class="overlay" id="ov-result" hidden>
+  <div class="sheet center" role="dialog" aria-labelledby="resTitle">
+    <div class="eyebrow">GAME OVER</div>
+    <h2 id="resTitle">—</h2>
+    <div class="res-score">
+      <div><span class="disc-ico b"></span><b id="resB">0</b></div>
+      <span class="vs">–</span>
+      <div><b id="resW">0</b><span class="disc-ico w"></span></div>
+    </div>
+    <div class="res-bar"><i id="resBar"></i></div>
+    <div class="res-table" id="resTable"></div>
+    <p class="lead" id="resSub" style="margin-bottom:0"></p>
+    <button class="primary" id="bAgain">もう一度</button>
+    <div class="row2">
+      <button class="ghost-btn" id="bBoard">盤面を見る</button>
+      <button class="ghost-btn" id="bSettings">設定を変える</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+// ===== ルール設定 =====
+// 手駒: [絶対値, 各符号の枚数]。空きマス数 ÷ 2 = 1人あたりの手駒数になるよう調整してある。
+const CONFIG = {
+  4: { tiles: [[1, 1], [2, 1], [3, 1]] },                 // 空き12 → 各6枚
+  6: { tiles: [[1, 2], [2, 2], [3, 2], [4, 2]] },         // 空き32 → 各16枚
+  8: { tiles: [[1, 3], [2, 3], [3, 3], [4, 3], [5, 3]] }, // 空き60 → 各30枚
+};
+const OFF = 5, NV = 11; // 手駒は値 v の枚数を hand[v + OFF] に持つ
+const BLACK = 1, WHITE = 2;
+const NAME = { 1: '黒', 2: '白' };
+
+function freshHand(N) {
+  const h = new Int8Array(NV);
+  for (const [a, c] of CONFIG[N].tiles) { h[OFF + a] += c; h[OFF - a] += c; }
+  return h;
+}
+function tileSet(N) { // 表示順: 上段 +1..+k, 下段 −1..−k
+  const abs = CONFIG[N].tiles.map(t => t[0]);
+  return [...abs, ...abs.map(a => -a)];
+}
+const handCount = h => { let n = 0; for (let k = 0; k < NV; k++) n += h[k]; return n; };
+const handSum = h => { let s = 0; for (let k = 0; k < NV; k++) s += (k - OFF) * h[k]; return s; };
+function tileValues(h) { const vs = []; for (let k = 0; k < NV; k++) if (h[k]) vs.push(k - OFF); return vs.length ? vs : [0]; }
+const fmt = v => v > 0 ? '+' + v : v < 0 ? '−' + (-v) : '0';
+const sgnCls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : 'zero';
+
+// ===== 盤の幾何 =====
+let RAYS = [], RISK = null, CORNER = null, ORDER = [];
+function setupGeometry(N) {
+  const D = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  RAYS = []; RISK = new Float32Array(N * N); CORNER = new Uint8Array(N * N);
+  const posw = new Float32Array(N * N);
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const i = r * N + c, rays = [];
+    for (const [dr, dc] of D) {
+      const ray = []; let rr = r + dr, cc = c + dc;
+      while (rr >= 0 && rr < N && cc >= 0 && cc < N) { ray.push(rr * N + cc); rr += dr; cc += dc; }
+      if (ray.length >= 2) rays.push(ray);
+    }
+    RAYS[i] = rays;
+    const edge = r === 0 || r === N - 1 || c === 0 || c === N - 1;
+    const corner = (r === 0 || r === N - 1) && (c === 0 || c === N - 1);
+    const dr = Math.min(r, N - 1 - r), dc = Math.min(c, N - 1 - c);
+    const near = Math.max(dr, dc) === 1 && Math.min(dr, dc) <= 1;
+    CORNER[i] = corner ? 1 : 0;
+    // RISK ≒ その石が最後までに裏返されそうな度合い（評価関数用）
+    if (corner) { RISK[i] = 0; posw[i] = 10; }
+    else if (near && !edge) { RISK[i] = .5; posw[i] = -5; }   // X打ち
+    else if (near && edge) { RISK[i] = .4; posw[i] = -2; }    // C打ち
+    else if (edge) { RISK[i] = .2; posw[i] = 3; }
+    else { RISK[i] = .32; posw[i] = 0; }
+  }
+  ORDER = [...Array(N * N).keys()].sort((a, b) => posw[b] - posw[a]);
+}
+
+function flipsOf(own, i, p) {
+  const res = [];
+  if (own[i]) return res;
+  const o = 3 - p;
+  for (const ray of RAYS[i]) {
+    let k = 0;
+    while (k < ray.length && own[ray[k]] === o) k++;
+    if (k > 0 && k < ray.length && own[ray[k]] === p) for (let j = 0; j < k; j++) res.push(ray[j]);
+  }
+  return res;
+}
+function canPlay(own, i, p) {
+  if (own[i]) return false;
+  const o = 3 - p;
+  for (const ray of RAYS[i]) {
+    if (own[ray[0]] !== o) continue;
+    let k = 1;
+    while (k < ray.length && own[ray[k]] === o) k++;
+    if (k < ray.length && own[ray[k]] === p) return true;
+  }
+  return false;
+}
+function legalCells(own, p) { const m = []; for (const i of ORDER) if (canPlay(own, i, p)) m.push(i); return m; }
+function legalCount(own, p) { let n = 0; for (let i = 0; i < own.length; i++) if (canPlay(own, i, p)) n++; return n; }
+
+// ===== CPU =====
+const TIMEOUT = {};
+function make(ctx, i, v, p) {
+  const fl = flipsOf(ctx.own, i, p);
+  ctx.own[i] = p; ctx.val[i] = v;
+  const h = ctx.hand[p];
+  fl.used = h[v + OFF] > 0; if (fl.used) h[v + OFF]--;
+  for (const j of fl) ctx.own[j] = p;
+  return fl;
+}
+function unmake(ctx, i, v, p, fl) {
+  const o = 3 - p;
+  for (const j of fl) ctx.own[j] = o;
+  ctx.own[i] = 0; ctx.val[i] = 0;
+  if (fl.used) ctx.hand[p][v + OFF]++;
+}
+function finalDiff(ctx, p) {
+  const { own, val } = ctx; let s = handSum(ctx.hand[p]) - handSum(ctx.hand[3 - p]), st = 0;
+  for (let i = 0; i < own.length; i++) if (own[i]) { const sg = own[i] === p ? 1 : -1; s += sg * val[i]; st += sg; }
+  return s * 1000 + st;
+}
+function evaluate(ctx, p) {
+  const { own, val } = ctx, o = 3 - p;
+  let s = handSum(ctx.hand[p]) - handSum(ctx.hand[o]);
+  for (let i = 0; i < own.length; i++) {
+    const w = own[i]; if (!w) continue;
+    const sg = w === p ? 1 : -1;
+    // 返されやすい場所の石ほど「最終的に自分の点として残る」見込みが薄い
+    s += sg * (val[i] * (1 - 1.2 * RISK[i]) + CORNER[i] * .8);
+  }
+  return s + .15 * (legalCount(own, p) - legalCount(own, o));
+}
+function candVals(h) { // 途中局面では極端な値と0に近い値だけ試す
+  const vs = tileValues(h);
+  if (vs.length <= 4) return vs;
+  let minPos = null, maxNeg = null;
+  for (const v of vs) { if (v > 0 && minPos === null) minPos = v; if (v < 0) maxNeg = v; }
+  return [...new Set([vs[vs.length - 1], vs[0], minPos, maxNeg].filter(v => v !== null))];
+}
+function negamax(ctx, p, depth, alpha, beta, passed) {
+  if ((++ctx.nodes & 1023) === 0 && performance.now() > ctx.deadline) throw TIMEOUT;
+  const cells = legalCells(ctx.own, p);
+  if (!cells.length) {
+    if (passed) return finalDiff(ctx, p);
+    return -negamax(ctx, 3 - p, depth, -beta, -alpha, true);
+  }
+  if (depth <= 0) return evaluate(ctx, p);
+  const vals = candVals(ctx.hand[p]);
+  let best = -Infinity;
+  for (const i of cells) for (const v of vals) {
+    const fl = make(ctx, i, v, p);
+    const sc = -negamax(ctx, 3 - p, depth - 1, -beta, -alpha, false);
+    unmake(ctx, i, v, p, fl);
+    if (sc > best) { best = sc; if (sc > alpha) { alpha = sc; if (alpha >= beta) return best; } }
+  }
+  return best;
+}
+function aiChoose(level) {
+  const me = G.turn;
+  const ctx = {
+    own: Int8Array.from(G.own), val: Int8Array.from(G.val),
+    hand: { 1: Int8Array.from(G.hand[1]), 2: Int8Array.from(G.hand[2]) },
+    nodes: 0, deadline: Infinity,
+  };
+  const moves = [];
+  for (const i of legalCells(ctx.own, me)) for (const v of tileValues(ctx.hand[me])) moves.push({ i, v, score: 0 });
+  if (level === 'easy') {
+    if (Math.random() < .3) return moves[Math.random() * moves.length | 0];
+    for (const m of moves) { const fl = make(ctx, m.i, m.v, me); m.score = -evaluate(ctx, 3 - me) + Math.random() * 5; unmake(ctx, m.i, m.v, me, fl); }
+    return moves.reduce((a, b) => b.score > a.score ? b : a);
+  }
+  const maxDepth = level === 'normal' ? 2 : 40;
+  ctx.deadline = performance.now() + (level === 'normal' ? 400 : 1400);
+  let empties = 0; for (const x of ctx.own) if (!x) empties++;
+  let best = moves[0];
+  for (let d = 1; d <= maxDepth; d++) {
+    try {
+      let alpha = -Infinity, bestD = null;
+      for (const m of moves) {
+        const fl = make(ctx, m.i, m.v, me);
+        m.score = -negamax(ctx, 3 - me, d - 1, -Infinity, -alpha, false) + Math.random() * .01;
+        unmake(ctx, m.i, m.v, me, fl);
+        if (m.score > alpha) { alpha = m.score; bestD = m; }
+      }
+      best = bestD;
+      moves.sort((a, b) => b.score - a.score);
+      if (d >= empties) break;
+    } catch (e) { if (e !== TIMEOUT) throw e; break; }
+  }
+  return best;
+}
+
+// ===== サウンド（WebAudio 合成）=====
+const Sound = {
+  on: true, ctx: null,
+  ensure() {
+    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return this.ctx;
+  },
+  tone(freq, dur, type = 'sine', gain = 0.12, when = 0, bend = 0.6) {
+    if (!this.on) return;
+    const c = this.ensure(); if (!c) return;
+    const t = c.currentTime + when;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(freq * bend, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(c.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  },
+  place() {
+    if (!this.on) return;
+    const c = this.ensure(); if (!c) return;
+    const len = (0.045 * c.sampleRate) | 0;
+    const buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 5);
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1500; f.Q.value = 0.9;
+    const g = c.createGain(); g.gain.value = 0.55;
+    src.connect(f).connect(g).connect(c.destination); src.start();
+    this.tone(160, 0.14, 'sine', 0.3, 0, 0.5);
+  },
+  flip(k, when) { this.tone(640 + k * 42, 0.06, 'triangle', 0.05, when, 0.8); },
+  gain(d, when) {
+    if (d > 0) { this.tone(784, 0.18, 'sine', 0.06, when, 1); this.tone(1175, 0.24, 'sine', 0.05, when + .07, 1); }
+    else if (d < 0) { this.tone(220, 0.3, 'triangle', 0.08, when, 0.7); }
+  },
+  select() { this.tone(880, 0.05, 'sine', 0.04, 0, 1); },
+  pass() { this.tone(392, 0.16, 'sine', 0.07, 0, 1); this.tone(294, 0.26, 'sine', 0.07, 0.13, 1); },
+  end(win) {
+    const notes = win === false ? [392, 330, 262] : [523, 659, 784, 1047];
+    notes.forEach((f, i) => this.tone(f, 0.35, 'triangle', 0.07, i * 0.12, 1));
+  },
+};
+
+// ===== 状態 =====
+let settings = { mode: 'cpu', human: 1, level: 'normal', N: 6, ...store.get('scoreOthello.settings', {}) };
+let prefs = { hints: true, sound: true, ...store.get('scoreOthello.prefs', {}) };
+Sound.on = prefs.sound;
+
+let G = null;
+const ui = { sel: null, pending: null, hover: null, cpuSel: null, thinking: false, cpuTimer: 0, pointer: 'mouse', lastScore: { 1: 0, 2: 0 } };
+let cells = [], racks = {};
+
+function newGame() {
+  const N = settings.N;
+  setupGeometry(N);
+  const own = new Int8Array(N * N), val = new Int8Array(N * N), c = N / 2;
+  own[(c - 1) * N + c - 1] = WHITE; own[(c - 1) * N + c] = BLACK;
+  own[c * N + c - 1] = BLACK; own[c * N + c] = WHITE;
+  G = { N, own, val, hand: { 1: freshHand(N), 2: freshHand(N) }, turn: BLACK, last: -1, over: false, hist: [],
+        mode: settings.mode, human: settings.human, level: settings.level };
+  resetUI(); buildBoard(); render(); save(); maybeCPU();
+}
+function resetUI() {
+  cancelCPU();
+  ui.sel = ui.pending = ui.hover = ui.cpuSel = null;
+  hideTip();
+}
+const snap = () => ({ own: Array.from(G.own), val: Array.from(G.val), h1: Array.from(G.hand[1]), h2: Array.from(G.hand[2]), turn: G.turn, last: G.last });
+function restore(s) {
+  G.own = Int8Array.from(s.own); G.val = Int8Array.from(s.val);
+  G.hand = { 1: Int8Array.from(s.h1), 2: Int8Array.from(s.h2) };
+  G.turn = s.turn; G.last = s.last;
+}
+function save() { store.set('scoreOthello.game', { ...snap(), N: G.N, over: G.over, hist: G.hist, mode: G.mode, human: G.human, level: G.level }); }
+function load() {
+  const s = store.get('scoreOthello.game', null);
+  if (!s || !CONFIG[s.N] || !Array.isArray(s.own) || s.own.length !== s.N * s.N) return false;
+  setupGeometry(s.N);
+  G = { N: s.N, hand: {}, over: !!s.over, hist: s.hist || [], mode: s.mode, human: s.human, level: s.level };
+  restore(s);
+  return true;
+}
+
+const isCPU = p => G.mode === 'cpu' && p !== G.human;
+const humanTurn = () => !G.over && !ui.thinking && !isCPU(G.turn);
+function stats(p) {
+  let board = 0, stones = 0;
+  for (let i = 0; i < G.own.length; i++) if (G.own[i] === p) { board += G.val[i]; stones++; }
+  const hand = handSum(G.hand[p]);
+  return { board, hand, total: board + hand, stones, left: handCount(G.hand[p]) };
+}
+const deltaOf = (i, p) => flipsOf(G.own, i, p).reduce((s, j) => s + G.val[j], 0);
+function playerLabel(p) {
+  if (G.mode !== 'cpu') return NAME[p];
+  return p === G.human ? 'あなた' : 'CPU';
+}
+
+// ===== 盤の構築 =====
+function buildBoard() {
+  const N = G.N, bd = $('#board');
+  document.documentElement.style.setProperty('--n', N);
+  bd.innerHTML = '';
+  cells = [];
+  for (let i = 0; i < N * N; i++) {
+    const c = document.createElement('div');
+    c.className = 'cell'; c.setAttribute('role', 'gridcell');
+    c.innerHTML = '<span class="dot"></span><span class="hint"></span><div class="dw"><div class="disc"><div class="face b"><span></span></div><div class="face w"><span></span></div></div></div>';
+    c.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { ui.hover = i; render(); } });
+    c.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && ui.hover === i) { ui.hover = null; render(); } });
+    c.addEventListener('pointerdown', e => { ui.pointer = e.pointerType; });
+    c.addEventListener('click', () => onCell(i));
+    c._num = c.querySelectorAll('.face span'); c._hint = c.querySelector('.hint'); c._dw = c.querySelector('.dw'); c._disc = c.querySelector('.disc');
+    c._v = null;
+    bd.appendChild(c); cells.push(c);
+  }
+  if (N >= 6) for (const [a, b] of [[2, 2], [2, N - 2], [N - 2, 2], [N - 2, N - 2]]) {
+    const s = document.createElement('i'); s.className = 'star';
+    s.style.left = `calc(2px + (100% - 4px) * ${b / N})`; s.style.top = `calc(2px + (100% - 4px) * ${a / N})`;
+    bd.appendChild(s);
+  }
+  for (const p of [BLACK, WHITE]) {
+    const root = $(p === BLACK ? '#rackB' : '#rackW'), grid = root.querySelector('.tiles');
+    const vs = tileSet(N);
+    grid.style.setProperty('--k', vs.length / 2);
+    grid.innerHTML = '';
+    const tiles = {};
+    for (const v of vs) {
+      const t = document.createElement('button');
+      t.className = 'tile ' + (p === BLACK ? 'b ' : 'w ') + sgnCls(v);
+      t.innerHTML = `<span>${fmt(v)}</span><span class="c"></span>`;
+      t.addEventListener('click', () => onTile(p, v));
+      grid.appendChild(t); tiles[v] = t;
+    }
+    const bl = document.createElement('button');
+    bl.className = 'tile blank zero ' + (p === BLACK ? 'b' : 'w');
+    bl.innerHTML = '0 <small>ブランク駒</small>';
+    bl.addEventListener('click', () => onTile(p, 0));
+    grid.appendChild(bl); tiles[0] = bl;
+    racks[p] = { root, tiles, meta: root.querySelector('.meta'), name: root.querySelector('.rname'), foot: root.querySelector('.rack-foot') };
+  }
+}
+
+// ===== 描画 =====
+function render() {
+  const N = G.N, p = G.turn, canAct = humanTurn();
+  const legal = new Set(G.over ? [] : legalCells(G.own, p));
+  let target = ui.pending;
+  if (target == null && canAct && ui.hover != null && legal.has(ui.hover)) target = ui.hover;
+  const tv = ui.cpuSel != null ? ui.cpuSel : ui.sel;
+  const pv = new Set(target != null ? flipsOf(G.own, target, p) : []);
+
+  for (let i = 0; i < N * N; i++) {
+    const c = cells[i], o = G.own[i];
+    let show = o, v = G.val[i], ghost = false;
+    if (!o && i === target && tv != null) { show = p; v = tv; ghost = true; }
+    c.classList.toggle('has', !!show);
+    c.classList.toggle('w', show === WHITE);
+    c.classList.toggle('ghost', ghost);
+    if (show && c._v !== v) {
+      c._v = v;
+      c._num[0].textContent = c._num[1].textContent = fmt(v);
+      c.classList.remove('pos', 'neg', 'zero'); c.classList.add(sgnCls(v));
+    }
+    const valid = canAct && legal.has(i);
+    c.classList.toggle('valid', valid);
+    c.classList.toggle('pv', pv.has(i));
+    c.classList.toggle('pending', i === ui.pending);
+    c.classList.toggle('last', i === G.last && !!o);
+    const hinted = valid && prefs.hints;
+    c.classList.toggle('hinted', hinted);
+    if (hinted) { const d = deltaOf(i, p); c._hint.textContent = d === 0 ? '±0' : fmt(d); c._hint.className = 'hint ' + sgnCls(d); }
+  }
+
+  // スコア
+  const sb = stats(BLACK), sw = stats(WHITE);
+  for (const [p2, s, cnt, sub, side, name] of [[BLACK, sb, '#cntB', '#subB', '#sideB', '#nameB'], [WHITE, sw, '#cntW', '#subW', '#sideW', '#nameW']]) {
+    const el = $(cnt);
+    if (el.textContent !== fmt(s.total)) {
+      el.textContent = fmt(s.total);
+      if (ui.lastScore[p2] !== s.total) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+      ui.lastScore[p2] = s.total;
+    }
+    $(sub).textContent = `盤 ${fmt(s.board)} ・ 手駒 ${fmt(s.hand)}`;
+    $(side).classList.toggle('active', !G.over && G.turn === p2);
+    $(name).textContent = playerLabel(p2);
+  }
+  const scale = CONFIG[N].tiles.reduce((a, t) => a + t[0] * t[1], 0) / 2;
+  $('#bar').style.width = (50 + 50 * Math.tanh((sb.total - sw.total) / scale)) + '%';
+  let empties = 0; for (const x of G.own) if (!x) empties++;
+  $('#remain').textContent = empties;
+
+  // 手駒
+  for (const p2 of [BLACK, WHITE]) {
+    const R = racks[p2], h = G.hand[p2], mine = canAct && G.turn === p2;
+    R.root.classList.toggle('active', !G.over && G.turn === p2);
+    R.name.textContent = playerLabel(p2);
+    R.meta.innerHTML = `<b>${handCount(h)}</b>枚 ・ 計 <b>${fmt(handSum(h))}</b>`;
+    const empty = handCount(h) === 0;
+    const selV = G.turn === p2 ? tv : null;
+    for (const [k, t] of Object.entries(R.tiles)) {
+      const v = +k;
+      if (v === 0) { t.hidden = !empty || G.over; t.disabled = !mine; t.classList.toggle('sel', selV === 0); continue; }
+      const n = h[v + OFF];
+      t.classList.toggle('gone', n === 0);
+      t.querySelector('.c').textContent = n > 1 ? '×' + n : '';
+      t.disabled = !mine || n === 0;
+      t.classList.toggle('sel', selV === v && n > 0);
+      t.title = `${fmt(v)} 点の駒（残り${n}枚）`;
+    }
+    R.foot.textContent = mine ? (ui.sel == null ? '置く駒を選んでください' : `${fmt(ui.sel)} を置くマスを選んでください`) : '';
+  }
+
+  renderStatus(target);
+  renderTip(target);
+  $('#bUndo').disabled = !canUndo();
+}
+
+function renderStatus(target) {
+  const st = $('#status'), p = G.turn;
+  st.classList.remove('clickable'); st.onclick = null;
+  if (G.over) {
+    const r = result();
+    st.innerHTML = `<span class="dot g"></span>終局 — ${r.title}<small>結果を見る</small>`;
+    st.classList.add('clickable'); st.onclick = () => showResult(false);
+    return;
+  }
+  const dot = `<span class="dot ${p === BLACK ? 'b' : 'w'}"></span>`;
+  if (ui.thinking) { st.innerHTML = `${dot}<span class="thinking">CPU が考えています</span>`; return; }
+  const who = G.mode === 'cpu' ? 'あなたの番' : `${NAME[p]}の番`;
+  const tap = ui.pointer === 'mouse' ? 'クリック' : 'タップ';
+  let hint;
+  if (ui.pending != null && ui.sel == null) hint = '手駒を選ぶと置きます';
+  else if (ui.pending != null) hint = `もう一度${tap}で決定`;
+  else if (ui.sel == null) hint = '手駒を選んで、光るマスへ';
+  else hint = `${fmt(ui.sel)} を置くマスを${tap}`;
+  st.innerHTML = `${dot}${who}<small>${hint}</small>`;
+}
+
+const tipEl = $('#tip');
+function renderTip(target) {
+  if (target == null || G.over) { hideTip(); return; }
+  const d = deltaOf(target, G.turn), n = flipsOf(G.own, target, G.turn).length;
+  tipEl.className = 'tip show ' + sgnCls(d);
+  tipEl.innerHTML = `${d === 0 ? '±0' : fmt(d)} 点<small>${n}枚返す</small>`;
+  const r = cells[target].getBoundingClientRect();
+  tipEl.style.left = (r.left + r.width / 2) + 'px';
+  tipEl.style.top = (r.top - 6) + 'px';
+}
+function hideTip() { tipEl.classList.remove('show'); }
+
+// ===== 操作 =====
+function onCell(i) {
+  if (!humanTurn()) return;
+  const p = G.turn;
+  if (!canPlay(G.own, i, p)) { if (ui.pending != null) { ui.pending = null; render(); } return; }
+  Sound.ensure();
+  if (ui.pointer === 'mouse') {
+    if (ui.sel != null) return commit(i, ui.sel);
+    ui.pending = ui.pending === i ? null : i;
+    if (ui.pending != null) nudgeRack(p);
+  } else {
+    if (ui.pending === i && ui.sel != null) return commit(i, ui.sel);
+    ui.pending = i;
+    if (ui.sel == null) nudgeRack(p);
+  }
+  render();
+}
+function onTile(p, v) {
+  if (!humanTurn() || G.turn !== p) return;
+  const h = G.hand[p];
+  if (v === 0 ? handCount(h) !== 0 : !h[v + OFF]) return;
+  Sound.select();
+  if (ui.pending != null) return commit(ui.pending, v);
+  ui.sel = ui.sel === v ? null : v;
+  render();
+}
+function nudgeRack(p) { const r = racks[p].root; r.classList.remove('nudge'); void r.offsetWidth; r.classList.add('nudge'); }
+
+function commit(i, v) {
+  const p = G.turn, fl = flipsOf(G.own, i, p);
+  if (!fl.length) return;
+  const h = G.hand[p];
+  if (v !== 0 && !h[v + OFF]) return;
+  if (v === 0 && handCount(h) !== 0) return;
+  G.hist.push(snap());
+  const delta = fl.reduce((s, j) => s + G.val[j], 0);
+  G.own[i] = p; G.val[i] = v;
+  if (h[v + OFF] > 0) h[v + OFF]--;
+  for (const j of fl) G.own[j] = p;
+  G.last = i;
+  ui.sel = ui.pending = ui.cpuSel = null;
+
+  // 演出
+  const N = G.N, r0 = (i / N) | 0, c0 = i % N;
+  const dw = cells[i]._dw; dw.classList.remove('drop'); void dw.offsetWidth; dw.classList.add('drop');
+  setTimeout(() => dw.classList.remove('drop'), 400);
+  Sound.place();
+  let maxDelay = 0;
+  fl.forEach((j, k) => {
+    const d = Math.max(Math.abs(((j / N) | 0) - r0), Math.abs(j % N - c0));
+    const delay = 90 + d * 75;
+    maxDelay = Math.max(maxDelay, delay);
+    const c = cells[j];
+    c._disc.style.transitionDelay = delay + 'ms';
+    c._dw.style.animationDelay = delay + 'ms';
+    c._dw.classList.remove('lift'); void c._dw.offsetWidth; c._dw.classList.add('lift');
+    Sound.flip(k, delay / 1000);
+    setTimeout(() => { c._disc.style.transitionDelay = ''; c._dw.style.animationDelay = ''; c._dw.classList.remove('lift'); }, delay + 600);
+  });
+  setTimeout(() => floatDelta(i, delta), maxDelay + 220);
+  Sound.gain(delta, (maxDelay + 250) / 1000);
+
+  G.turn = 3 - p;
+  const passed = resolvePass();
+  render(); save();
+  const wait = maxDelay + 650;
+  if (G.over) setTimeout(() => showResult(true), wait + 300);
+  else if (passed) setTimeout(() => { Sound.pass(); toast(passed); }, maxDelay + 200);
+  maybeCPU(passed ? wait + 900 : wait);
+}
+function resolvePass() {
+  if (legalCells(G.own, G.turn).length) return null;
+  if (!legalCells(G.own, 3 - G.turn).length) { G.over = true; return null; }
+  const who = G.mode === 'cpu' ? (G.turn === G.human ? 'あなた' : 'CPU') : NAME[G.turn];
+  G.turn = 3 - G.turn;
+  return `${who}は置ける場所がないのでパス`;
+}
+function floatDelta(i, d) {
+  const c = cells[i], bd = $('#board'), b = bd.parentElement;
+  const f = document.createElement('div');
+  f.className = 'float ' + sgnCls(d);
+  f.textContent = d === 0 ? '±0' : fmt(d);
+  f.style.left = (bd.offsetLeft + c.offsetLeft + c.offsetWidth / 2) + 'px';
+  f.style.top = (bd.offsetTop + c.offsetTop + c.offsetHeight / 2) + 'px';
+  b.appendChild(f);
+  setTimeout(() => f.remove(), 1300);
+}
+
+function maybeCPU(delay = 500) {
+  if (G.over || !isCPU(G.turn)) return;
+  cancelCPU();
+  ui.thinking = true; render();
+  ui.cpuTimer = setTimeout(() => {
+    const m = aiChoose(G.level);
+    ui.pending = m.i; ui.cpuSel = m.v; render();
+    ui.cpuTimer = setTimeout(() => { ui.thinking = false; commit(m.i, m.v); }, 520);
+  }, Math.max(350, delay));
+}
+function cancelCPU() { clearTimeout(ui.cpuTimer); ui.thinking = false; ui.cpuSel = null; }
+
+function canUndo() {
+  if (!G.hist.length || ui.thinking) return false;
+  if (G.mode === 'cpu') return G.hist.some(s => s.turn === G.human);
+  return true;
+}
+function undo() {
+  if (!canUndo()) return;
+  resetUI();
+  let s;
+  if (G.mode === 'cpu') { do { s = G.hist.pop(); } while (s.turn !== G.human); }
+  else s = G.hist.pop();
+  restore(s); G.over = false;
+  closeOv('#ov-result');
+  render(); save();
+  toast('一手戻しました', 900);
+}
+
+// ===== 結果 =====
+function result() {
+  const b = stats(BLACK), w = stats(WHITE);
+  let win = 0, byStones = false;
+  if (b.total !== w.total) win = b.total > w.total ? BLACK : WHITE;
+  else if (b.stones !== w.stones) { win = b.stones > w.stones ? BLACK : WHITE; byStones = true; }
+  let title;
+  if (!win) title = '引き分け';
+  else if (G.mode === 'cpu') title = win === G.human ? 'あなたの勝ち' : 'CPUの勝ち';
+  else title = `${NAME[win]}の勝ち`;
+  return { b, w, win, byStones, title };
+}
+function showResult(fresh) {
+  const r = result(), { b, w } = r;
+  $('#resTitle').textContent = r.title;
+  $('#resB').textContent = fmt(b.total); $('#resW').textContent = fmt(w.total);
+  const scale = CONFIG[G.N].tiles.reduce((a, t) => a + t[0] * t[1], 0) / 2;
+  $('#resBar').style.width = '50%';
+  const cell = (t, cls = '') => `<div class="${cls}">${t}</div>`;
+  $('#resTable').innerHTML =
+    cell('') + cell('黒') + cell('白') +
+    cell('盤上の石') + cell(fmt(b.board), 'n') + cell(fmt(w.board), 'n') +
+    cell('残った手駒') + cell(fmt(b.hand), 'n') + cell(fmt(w.hand), 'n') +
+    cell('石の数') + cell(b.stones, 'n') + cell(w.stones, 'n');
+  let sub = '';
+  if (r.byStones) sub = `同点のため、石の数（${b.stones} 対 ${w.stones}）で決着しました。`;
+  else if (!r.win) sub = '得点も石の数も同じでした。';
+  else sub = `${Math.abs(b.total - w.total)} 点差。`;
+  $('#resSub').textContent = sub;
+  openOv('#ov-result');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    $('#resBar').style.width = (50 + 50 * Math.tanh((b.total - w.total) / scale)) + '%';
+  }));
+  if (fresh) Sound.end(G.mode === 'cpu' ? (r.win === 0 ? null : r.win === G.human) : null);
+}
+
+// ===== オーバーレイ / トースト =====
+function openOv(id) { const o = $(id); o.hidden = false; requestAnimationFrame(() => o.classList.add('show')); }
+function closeOv(id) { const o = $(id); if (o.hidden) return; o.classList.remove('show'); setTimeout(() => { if (!o.classList.contains('show')) o.hidden = true; }, 230); }
+const anyOverlay = () => [...document.querySelectorAll('.overlay')].some(o => !o.hidden);
+let toastT = 0;
+function toast(msg, ms = 1800) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function syncMenu() {
+  document.querySelectorAll('.seg').forEach(seg => {
+    const key = seg.dataset.key;
+    seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(settings[key]) === b.dataset.v));
+  });
+  document.querySelectorAll('.cpu-only').forEach(el => el.hidden = settings.mode !== 'cpu');
+  $('#bResume').hidden = !G || G.over;
+}
+function openMenu() { syncMenu(); openOv('#ov-menu'); }
+document.querySelectorAll('.seg').forEach(seg => {
+  seg.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const key = seg.dataset.key, v = b.dataset.v;
+    settings[key] = (key === 'N' || key === 'human') ? +v : v;
+    store.set('scoreOthello.settings', settings);
+    syncMenu();
+  });
+});
+
+const ICON_SOUND_ON = '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4M18.3 6a8.5 8.5 0 0 1 0 12"/>';
+const ICON_SOUND_OFF = '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9.5 5 5m0-5-5 5"/>';
+function syncDock() {
+  $('#bHint').setAttribute('aria-pressed', prefs.hints);
+  $('#bSound').setAttribute('aria-pressed', prefs.sound);
+  $('#icoSound').innerHTML = prefs.sound ? ICON_SOUND_ON : ICON_SOUND_OFF;
+}
+function toggleHints() {
+  prefs.hints = !prefs.hints; store.set('scoreOthello.prefs', prefs); syncDock(); render();
+  toast(prefs.hints ? '置いたときの点の増減を表示します' : 'ヒントを隠しました', 1300);
+}
+
+$('#bUndo').onclick = undo;
+$('#bHint').onclick = toggleHints;
+$('#bSound').onclick = () => { prefs.sound = Sound.on = !prefs.sound; store.set('scoreOthello.prefs', prefs); syncDock(); if (prefs.sound) Sound.select(); };
+$('#bHelp').onclick = () => openOv('#ov-help');
+$('#bMenu').onclick = openMenu;
+$('#bStart').onclick = () => { closeOv('#ov-menu'); closeOv('#ov-result'); newGame(); };
+$('#bResume').onclick = () => closeOv('#ov-menu');
+$('#bRules').onclick = () => openOv('#ov-help');
+$('#bAgain').onclick = () => { closeOv('#ov-result'); settings = { ...settings, mode: G.mode, human: G.human, level: G.level, N: G.N }; newGame(); };
+$('#bBoard').onclick = () => closeOv('#ov-result');
+$('#bSettings').onclick = () => { closeOv('#ov-result'); openMenu(); };
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closeOv('#' + b.closest('.overlay').id));
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => {
+  if (e.target === o && (o.id !== 'ov-menu' || !$('#bResume').hidden)) closeOv('#' + o.id);
+}));
+// 盤の外をクリックしたら選択中のマスを解除
+document.addEventListener('click', e => {
+  if (ui.pending != null && !e.target.closest('.cell, .tile') && humanTurn()) { ui.pending = null; render(); }
+});
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'Escape') {
+    const open = [...document.querySelectorAll('.overlay')].filter(o => !o.hidden);
+    if (open.length) { const o = open[open.length - 1]; if (o.id !== 'ov-menu' || !$('#bResume').hidden) closeOv('#' + o.id); }
+    else if (ui.sel != null || ui.pending != null) { ui.sel = ui.pending = null; render(); }
+    return;
+  }
+  if (anyOverlay()) return;
+  if (e.key === 'h' || e.key === 'H') { toggleHints(); return; }
+  if (e.key === '?') { openOv('#ov-help'); return; }
+  const m = /^Digit([0-9])$/.exec(e.code);
+  if (m && humanTurn()) { const n = +m[1]; onTile(G.turn, e.shiftKey ? -n : n); }
+});
+addEventListener('resize', () => { if (G) renderTip(ui.pending); });
+
+// ===== 起動 =====
+syncDock();
+if (load()) {
+  buildBoard(); render(); maybeCPU();
+} else {
+  newGame();
+  openMenu();
+}
+</script>
+</body>
+</html>
