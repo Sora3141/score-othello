@@ -42,8 +42,8 @@
   }
   @media (min-width: 1180px) {
     :root {
-      --bs: max(320px, min(calc((100vh - 120px) / 1.06), calc(100vw - 640px), 1000px));
-      --bs: max(320px, min(calc((100dvh - 120px) / 1.06), calc(100vw - 640px), 1000px));
+      --bs: max(320px, min(calc((100vh - 134px) / 1.06), calc(100vw - 640px), 1000px));
+      --bs: max(320px, min(calc((100dvh - 134px) / 1.06), calc(100vw - 640px), 1000px));
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -528,6 +528,85 @@
     .side.active .disc-ico::after, .cell.pv .dw::after { animation: none; }
     .disc { transition-duration: .01s; }
   }
+  /* ---------- PC（Webサイト版）: 文字・UIを大きく ---------- */
+  @media (min-width: 980px) {
+    .brand { top: calc(24px + var(--safe-t)); left: 32px; }
+    .brand .en { font-size: 12.5px; }
+    .brand .ja { font-size: 24px; margin-top: 5px; }
+    .status { font-size: 17px; padding: 12px 24px; min-height: 50px; gap: 12px; }
+    .status small { font-size: 14px; }
+    .status small.h { display: none; }
+    .status .dot { width: 14px; height: 14px; }
+    .status .dot.g { width: 10px; height: 10px; }
+    .chip { font-size: 15px; padding: 12px 22px; min-height: 50px; gap: 14px; }
+    .chip .bar { width: 140px; height: 7px; }
+    nav.dock { padding: 7px; border-radius: 22px; }
+    nav.dock button { min-width: 74px; height: 64px; font-size: 12.5px; gap: 5px; border-radius: 16px; }
+    nav.dock svg { width: 25px; height: 25px; }
+    .rack .rack-head { font-size: 15px; margin-bottom: 16px; }
+    .rack .rack-head .meta { font-size: 14px; }
+    .rs-who b { font-size: 20px; }
+    .rs-who span { font-size: 13.5px; }
+    .rs-total { font-size: 60px; }
+    .rack-score .disc-ico { width: 46px; height: 46px; }
+    .rack .rack-foot { font-size: 14px; margin-top: 16px; color: var(--gold); opacity: .85; }
+    .rack .tile .c { min-width: 22px; height: 22px; font-size: 12.5px; border-radius: 11px; }
+    .toast { font-size: 17px; padding: 14px 24px; border-radius: 16px; }
+    .tip { font-size: 16px; padding: 7px 13px; border-radius: 11px; }
+    .tip small { font-size: 12.5px; }
+
+    .sheet { width: min(540px, 100%); padding: 38px 38px 30px; border-radius: 28px; }
+    .sheet.wide { width: min(720px, 100%); }
+    .eyebrow { font-size: 13px; }
+    .sheet h1 { font-size: 38px; margin: 10px 0 12px; }
+    .sheet h2 { font-size: 30px; margin: 10px 0 18px; }
+    .sheet h3 { font-size: 15px; margin: 28px 0 12px; }
+    .lead { font-size: 15.5px; margin-bottom: 26px; }
+    .field { margin-bottom: 18px; }
+    .field > label { font-size: 13.5px; margin-bottom: 9px; }
+    .seg { padding: 5px; border-radius: 15px; gap: 4px; }
+    .seg button { font-size: 16px; padding: 13px 8px; border-radius: 11px; }
+    .seg button small { font-size: 12px; }
+    .seg .mini { width: 13px; height: 13px; }
+    .primary { font-size: 17px; padding: 17px; border-radius: 16px; margin-top: 26px; }
+    .ghost-btn { font-size: 15.5px; padding: 14px; border-radius: 14px; }
+    .row2 { gap: 10px; margin-top: 10px; }
+    .rules li { font-size: 15.5px; padding: 0 0 18px 46px; }
+    .rules li b { font-size: 17px; margin-bottom: 2px; }
+    .rules li::before { width: 32px; height: 32px; font-size: 15px; }
+    .legend { padding: 18px 22px; gap: 14px 20px; }
+    .legend .lb { font-size: 15px; }
+    .legend .lb small { font-size: 12.5px; }
+    .legend .lt { gap: 14px; }
+    .legend .lt > span { font-size: 12.5px; }
+    .legend .tile { width: 38px; max-width: 38px; }
+    .legend .tile.neg { width: 34px; }
+    .figure { padding: 18px 20px; gap: 20px; }
+    .figure p { font-size: 14px; }
+    .fc { width: 42px; height: 42px; }
+    .fc .tile { width: 32px; max-width: 32px; }
+    .fc .tile.neg { width: 28px; }
+    .fig-cap { font-size: 13px; }
+    .keys { font-size: 15px; gap: 10px 20px; }
+    .keys dt kbd { font-size: 13px; padding: 3px 8px; }
+    .res-score b { font-size: 64px; }
+    .res-score .disc-ico { width: 44px; height: 44px; }
+    .res-bar { max-width: 360px; height: 9px; }
+    .res-table { max-width: 360px; font-size: 15px; }
+    .res-table > div { padding: 9px 12px; }
+    .res-table > div:nth-child(-n+3) { font-size: 13px; }
+  }
+  @media (min-width: 1180px) and (max-width: 1439px) {
+    nav.dock button { min-width: 54px; height: 54px; }
+    .brand .ja { font-size: 21px; }
+  }
+  @media (min-width: 980px) and (max-width: 1439px) {
+    .rs-total { font-size: 46px; }
+    .rack-score { gap: 12px; }
+    .rack-score .disc-ico { width: 40px; height: 40px; }
+    .rs-who b { font-size: 18px; }
+  }
+  .rs-who span { overflow: hidden; text-overflow: ellipsis; }
 </style>
 </head>
 <body>
@@ -1108,7 +1187,7 @@ function render() {
       t.classList.toggle('sel', selV === v && n > 0);
       t.title = `${fmt(v)} 点の駒（残り${n}枚）`;
     }
-    R.foot.textContent = mine ? (ui.sel == null ? '置く駒を選んでください' : `${fmt(ui.sel)} を置くマスを選んでください`) : '';
+    R.foot.textContent = mine ? hintText() : '';
   }
 
   renderStatus(target);
@@ -1128,13 +1207,14 @@ function renderStatus(target) {
   const dot = `<span class="dot ${p === BLACK ? 'b' : 'w'}"></span>`;
   if (ui.thinking) { st.innerHTML = `${dot}<span class="thinking">CPU が考えています</span>`; return; }
   const who = G.mode === 'cpu' ? 'あなたの番' : `${NAME[p]}の番`;
+  st.innerHTML = `${dot}${who}<small class="h">${hintText()}</small>`;
+}
+function hintText() {
   const tap = ui.pointer === 'mouse' ? 'クリック' : 'タップ';
-  let hint;
-  if (ui.pending != null && ui.sel == null) hint = '手駒を選ぶと置きます';
-  else if (ui.pending != null) hint = `もう一度${tap}で決定`;
-  else if (ui.sel == null) hint = '手駒を選んで、光るマスへ';
-  else hint = `${fmt(ui.sel)} を置くマスを${tap}`;
-  st.innerHTML = `${dot}${who}<small>${hint}</small>`;
+  if (ui.pending != null && ui.sel == null) return '手駒を選ぶと置きます';
+  if (ui.pending != null) return `もう一度${tap}で決定`;
+  if (ui.sel == null) return '手駒を選んで、光るマスへ';
+  return `${fmt(ui.sel)} を置くマスを${tap}`;
 }
 
 const tipEl = $('#tip');
