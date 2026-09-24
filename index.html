@@ -36,8 +36,8 @@
   }
   @media (min-width: 980px) {
     :root {
-      --bs: max(300px, min(calc(100vh - 250px), calc(100vw - 580px), 640px));
-      --bs: max(300px, min(calc(100dvh - 250px), calc(100vw - 580px), 640px));
+      --bs: max(300px, min(calc(100vh - 250px), calc(100vw - 660px), 640px));
+      --bs: max(300px, min(calc(100dvh - 250px), calc(100vw - 660px), 640px));
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -258,7 +258,16 @@
   }
   #rackB { grid-area: rb; }
   #rackW { grid-area: rw; }
-  @media (min-width: 980px) { .rack { width: 212px; padding: 14px 16px 16px; } }
+  @media (min-width: 980px) {
+    .rack { width: clamp(220px, calc((100vw - var(--bs)) / 2 - 80px), calc(var(--k) * 72px + 36px)); padding: 16px 18px 18px; border-radius: 22px; }
+    .rack-head { font-size: 13.5px; margin-bottom: 14px; gap: 9px; }
+    .rack-head .disc-ico { width: 17px; height: 17px; }
+    .rack-head .meta { font-size: 12px; }
+    .rack .tile { max-width: 64px; }
+    .rack .tile .c { min-width: 20px; height: 20px; font-size: 11.5px; border-radius: 10px; right: -6px; bottom: -6px; }
+    .rack .tile.blank { height: 42px; font-size: 15px; }
+    .rack-foot { font-size: 12px; margin-top: 14px; }
+  }
   .rack:not(.active) { opacity: .55; }
   .rack.active { border-color: rgba(242,198,109,.38); box-shadow: 0 12px 32px rgba(0,0,0,.35), 0 0 24px rgba(242,198,109,.08), inset 0 1px 0 rgba(255,255,255,.05); }
   .rack.nudge { animation: nudge .4s; }
@@ -269,7 +278,7 @@
   .rack-head .meta { margin-left: auto; font-family: var(--num); font-weight: 500; font-size: 11px; color: var(--muted); letter-spacing: .04em; white-space: nowrap; }
   .rack-head .meta b { color: var(--text); font-weight: 600; }
   .tiles { display: grid; grid-template-columns: repeat(var(--k), 1fr); gap: 7px; }
-  @media (min-width: 980px) { .tiles { gap: 10px; } }
+  @media (min-width: 980px) { .tiles { gap: 14px 12px; } }
   .tile {
     position: relative; aspect-ratio: 1; border-radius: 50%; max-width: 44px; width: 100%; justify-self: center;
     display: grid; place-items: center;
@@ -957,7 +966,7 @@ function buildBoard() {
   for (const p of [BLACK, WHITE]) {
     const root = $(p === BLACK ? '#rackB' : '#rackW'), grid = root.querySelector('.tiles');
     const vs = tileSet(N);
-    grid.style.setProperty('--k', vs.length / 2);
+    root.style.setProperty('--k', vs.length / 2);
     grid.innerHTML = '';
     const tiles = {};
     for (const v of vs) {
