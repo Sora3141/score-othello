@@ -4,7 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07110d">
-<title>点数オセロ</title>
+<meta name="description" content="石の一つひとつに点数がついたオセロ。はさんだ石は数字そのままで色だけが変わり、石の数ではなく自分の色の点数の合計で勝負します。">
+<title>点数オセロ — 石に点数がついたオセロ</title>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="点数オセロ">
+<meta property="og:title" content="点数オセロ — 石に点数がついたオセロ">
+<meta property="og:description" content="石の一つひとつに点数がついたオセロ。はさんだ石は数字そのままで色だけが変わり、石の数ではなく自分の色の点数の合計で勝負します。">
+<meta property="og:url" content="https://sora3141.github.io/score-othello/">
+<meta property="og:image" content="https://sora3141.github.io/score-othello/icons/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- apple-mobile-web-app-status-bar-style は付けない（black-translucent だと iOS 26 で上部が隠れる） -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="点数オセロ">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+<link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="stylesheet" href="./webapp-kit/webapp-kit.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
@@ -51,7 +73,7 @@
     margin: 0; min-height: 100%;
     font-family: var(--font); color: var(--text);
     background: radial-gradient(120% 80% at 50% 42%, var(--bg-2) 0%, var(--bg-1) 45%, var(--bg-0) 100%) fixed;
-    background-color: var(--bg-0);
+    background-color: #07110d; /* theme-color と同じ（Safari の上下バーの色は html から取られる） */
     -webkit-font-smoothing: antialiased;
     user-select: none; -webkit-user-select: none;
   }
@@ -74,7 +96,7 @@
     position: relative; z-index: 2;
     min-height: 100vh; min-height: 100dvh;
     display: flex; flex-direction: column; align-items: center; gap: 14px;
-    padding: calc(14px + var(--safe-t)) 16px calc(96px + var(--safe-b));
+    padding: calc(14px + var(--safe-t)) max(16px, env(safe-area-inset-right)) calc(96px + var(--safe-b)) max(16px, env(safe-area-inset-left));
   }
 
   /* ---------- brand ---------- */
@@ -393,14 +415,15 @@
   /* ---------- overlays ---------- */
   .overlay {
     position: fixed; inset: 0; z-index: 20;
-    display: grid; place-items: center; padding: 20px;
+    display: grid; place-items: center;
+    padding: max(20px, var(--safe-t)) max(20px, env(safe-area-inset-right)) max(20px, var(--safe-b)) max(20px, env(safe-area-inset-left));
     background: rgba(2, 7, 5, .55);
     backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
     opacity: 0; transition: opacity .22s;
   }
   .overlay.show { opacity: 1; }
   .sheet {
-    width: min(440px, 100%); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow: auto;
+    width: min(440px, 100%); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px - var(--safe-t) - var(--safe-b)); overflow: auto;
     padding: 28px 26px 22px; border-radius: 24px;
     background: rgba(12, 24, 19, .9);
     backdrop-filter: blur(22px) saturate(1.2); -webkit-backdrop-filter: blur(22px) saturate(1.2);
@@ -446,6 +469,19 @@
     transition: background .15s;
   }
   .ghost-btn:hover { background: rgba(255,255,255,.1); }
+  .ghost-btn svg { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .credit { margin: 16px 0 0; text-align: center; font-size: 11.5px; color: var(--faint); letter-spacing: .04em; }
+  .credit a { color: var(--muted); text-decoration: none; font-family: var(--num); font-weight: 600; letter-spacing: .08em; }
+  .credit a:hover { color: var(--gold); }
+  .res-share { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 8px 12px; min-height: 40px; font-size: 13px; color: var(--muted); border-radius: 10px; }
+  .res-share:hover { color: var(--gold); }
+  .res-share svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* webapp-kit（インストール案内・コピー通知）をアプリの色に合わせる */
+  :root {
+    --wak-bg: #0c1813; --wak-fg: #eef4f0; --wak-muted: #93a99f; --wak-line: rgba(255,255,255,.16);
+    --wak-accent: #f2c66d; --wak-accent-fg: #1d1405;
+  }
 
   .rules { margin: 0; padding: 0; list-style: none; counter-reset: r; }
   .rules li { counter-increment: r; position: relative; padding: 0 0 14px 38px; font-size: 13.5px; line-height: 1.75; color: var(--muted); }
@@ -722,6 +758,11 @@
       <button class="ghost-btn" id="bResume">対局に戻る</button>
       <button class="ghost-btn" id="bRules">ルール</button>
     </div>
+    <div class="row2">
+      <button class="ghost-btn" data-wak="install" hidden><svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7.5v7M9 11.5l3 3 3-3"/></svg>アプリにする</button>
+      <button class="ghost-btn" data-wak="share"><svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>共有</button>
+    </div>
+    <p class="credit"><a href="/">T.OFO</a> のアプリ</p>
   </div>
 </div>
 
@@ -778,16 +819,29 @@
       <button class="ghost-btn" id="bBoard">盤面を見る</button>
       <button class="ghost-btn" id="bSettings">設定を変える</button>
     </div>
+    <button class="res-share" id="bShareRes"><svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>結果を共有</button>
   </div>
 </div>
 
+<script src="./webapp-kit/webapp-kit.js"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
+// localStorage は sora3141.github.io の全アプリで共有されるので、キーは 'score-othello.' で始める
+const KEY = 'score-othello.';
 const store = {
-  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  get(k, d) { try { const v = localStorage.getItem(KEY + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch {} },
 };
+// 旧キー（scoreOthello.*）からの引っ越し。新しいキーがまだ無いときだけ写してから消す
+try {
+  for (const k of ['settings', 'prefs', 'game']) {
+    const old = localStorage.getItem('scoreOthello.' + k);
+    if (old == null) continue;
+    if (localStorage.getItem(KEY + k) == null) localStorage.setItem(KEY + k, old);
+    localStorage.removeItem('scoreOthello.' + k);
+  }
+} catch {}
 
 // ===== ルール設定 =====
 // 手駒: [絶対値, 各符号の枚数]。空きマス数 ÷ 2 = 1人あたりの手駒数になるよう調整してある。
@@ -1018,8 +1072,8 @@ const Sound = {
 };
 
 // ===== 状態 =====
-let settings = { mode: 'cpu', human: 1, level: 'normal', N: 6, ...store.get('scoreOthello.settings', {}) };
-let prefs = { hints: true, sound: true, ...store.get('scoreOthello.prefs', {}) };
+let settings = { mode: 'cpu', human: 1, level: 'normal', N: 6, ...store.get('settings', {}) };
+let prefs = { hints: true, sound: true, ...store.get('prefs', {}) };
 Sound.on = prefs.sound;
 
 let G = null;
@@ -1047,9 +1101,9 @@ function restore(s) {
   G.hand = { 1: Int8Array.from(s.h1), 2: Int8Array.from(s.h2) };
   G.turn = s.turn; G.last = s.last;
 }
-function save() { store.set('scoreOthello.game', { ...snap(), N: G.N, over: G.over, hist: G.hist, mode: G.mode, human: G.human, level: G.level }); }
+function save() { store.set('game', { ...snap(), N: G.N, over: G.over, hist: G.hist, mode: G.mode, human: G.human, level: G.level }); }
 function load() {
-  const s = store.get('scoreOthello.game', null);
+  const s = store.get('game', null);
   if (!s || !CONFIG[s.N] || !Array.isArray(s.own) || s.own.length !== s.N * s.N) return false;
   setupGeometry(s.N);
   G = { N: s.N, hand: {}, over: !!s.over, hist: s.hist || [], mode: s.mode, human: s.human, level: s.level };
@@ -1416,7 +1470,7 @@ document.querySelectorAll('.seg').forEach(seg => {
     const b = e.target.closest('button'); if (!b) return;
     const key = seg.dataset.key, v = b.dataset.v;
     settings[key] = (key === 'N' || key === 'human') ? +v : v;
-    store.set('scoreOthello.settings', settings);
+    store.set('settings', settings);
     syncMenu();
   });
 });
@@ -1429,13 +1483,13 @@ function syncDock() {
   $('#icoSound').innerHTML = prefs.sound ? ICON_SOUND_ON : ICON_SOUND_OFF;
 }
 function toggleHints() {
-  prefs.hints = !prefs.hints; store.set('scoreOthello.prefs', prefs); syncDock(); render();
+  prefs.hints = !prefs.hints; store.set('prefs', prefs); syncDock(); render();
   toast(prefs.hints ? '置いたときの点の増減を表示します' : 'ヒントを隠しました', 1300);
 }
 
 $('#bUndo').onclick = undo;
 $('#bHint').onclick = toggleHints;
-$('#bSound').onclick = () => { prefs.sound = Sound.on = !prefs.sound; store.set('scoreOthello.prefs', prefs); syncDock(); if (prefs.sound) Sound.select(); };
+$('#bSound').onclick = () => { prefs.sound = Sound.on = !prefs.sound; store.set('prefs', prefs); syncDock(); if (prefs.sound) Sound.select(); };
 $('#bHelp').onclick = () => openOv('#ov-help');
 $('#bMenu').onclick = openMenu;
 $('#bStart').onclick = () => { closeOv('#ov-menu'); closeOv('#ov-result'); newGame(); };
@@ -1444,6 +1498,10 @@ $('#bRules').onclick = () => openOv('#ov-help');
 $('#bAgain').onclick = () => { closeOv('#ov-result'); settings = { ...settings, mode: G.mode, human: G.human, level: G.level, N: G.N }; newGame(); };
 $('#bBoard').onclick = () => closeOv('#ov-result');
 $('#bSettings').onclick = () => { closeOv('#ov-result'); openMenu(); };
+$('#bShareRes').onclick = () => {
+  const r = result();
+  WebAppKit.share({ text: `点数オセロ ${G.N}×${G.N}：${r.title}（黒 ${fmt(r.b.total)} – 白 ${fmt(r.w.total)}）` });
+};
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closeOv('#' + b.closest('.overlay').id));
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => {
   if (e.target === o && (o.id !== 'ov-menu' || !$('#bResume').hidden)) closeOv('#' + o.id);
@@ -1484,6 +1542,9 @@ document.querySelectorAll('.fr[data-cells]').forEach(fr => {
 });
 
 // ===== 起動 =====
+WebAppKit.init({ title: '点数オセロ', text: '石に点数がついたオセロ。石の数ではなく点の合計で勝負！' });
+// オフラインでも遊べるように
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 syncDock();
 if (load()) {
   buildBoard(); render(); maybeCPU();

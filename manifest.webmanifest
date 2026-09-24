@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "点数オセロ — 石に点数がついたオセロ",
+  "short_name": "点数オセロ",
+  "description": "石の一つひとつに点数がついたオセロ。はさんだ石は数字そのままで色だけが変わり、石の数ではなく自分の色の点数の合計で勝負します。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07110d",
+  "theme_color": "#07110d",
+  "lang": "ja",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

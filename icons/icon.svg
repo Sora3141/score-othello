@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#2a8a62"/>
+      <stop offset=".6" stop-color="#1e6a4c"/>
+      <stop offset="1" stop-color="#123f2e"/>
+    </radialGradient>
+    <radialGradient id="blk" cx="34%" cy="28%" r="75%">
+      <stop offset="0" stop-color="#5e5e5e"/>
+      <stop offset=".62" stop-color="#121212"/>
+    </radialGradient>
+    <radialGradient id="wht" cx="34%" cy="28%" r="80%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".7" stop-color="#d9d3c7"/>
+    </radialGradient>
+    <radialGradient id="gold" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#ffe3a0"/>
+      <stop offset=".78" stop-color="#c8963c"/>
+    </radialGradient>
+    <radialGradient id="red" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#ec765a"/>
+      <stop offset=".78" stop-color="#a5301a"/>
+    </radialGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- 盤の目 -->
+  <path d="M256 40V472M40 256H472" stroke="#0b2a1f" stroke-width="8" opacity=".55"/>
+  <!-- プラスの黒石（5の目） -->
+  <g filter="url(#sh)">
+    <circle cx="200" cy="200" r="148" fill="url(#blk)"/>
+  </g>
+  <circle cx="200" cy="200" r="126" fill="none" stroke="#fff" stroke-opacity=".07" stroke-width="3"/>
+  <g fill="url(#gold)">
+    <circle cx="141" cy="141" r="25"/><circle cx="259" cy="141" r="25"/>
+    <circle cx="200" cy="200" r="25"/>
+    <circle cx="141" cy="259" r="25"/><circle cx="259" cy="259" r="25"/>
+  </g>
+  <!-- マイナスの白石（角丸の四角・2の目） -->
+  <g filter="url(#sh)">
+    <rect x="284" y="284" width="168" height="168" rx="42" fill="url(#wht)"/>
+  </g>
+  <g fill="url(#red)">
+    <rect x="376" y="310" width="34" height="34" rx="10"/>
+    <rect x="332" y="392" width="34" height="34" rx="10"/>
+  </g>
+</svg>
