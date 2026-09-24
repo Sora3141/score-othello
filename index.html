@@ -208,22 +208,32 @@
   .face {
     position: absolute; inset: 0; border-radius: 50%;
     backface-visibility: hidden; -webkit-backface-visibility: hidden;
-    display: grid; place-items: center;
-    font-family: var(--num); font-weight: 700; font-size: calc(var(--cs) * .36); letter-spacing: -.02em;
-    font-variant-numeric: tabular-nums;
   }
-  .face::before { content: ""; position: absolute; inset: 15%; border-radius: 50%; }
+  .face::before { content: ""; position: absolute; inset: 13%; border-radius: 50%; }
   .face.b { background: radial-gradient(circle at 34% 28%, #5a5a5a, #121212 62%); box-shadow: 0 3px 6px rgba(0,0,0,.55), inset 0 -2px 4px rgba(0,0,0,.7); }
   .face.b::before { border: 1px solid rgba(255,255,255,.07); }
   .face.w { transform: rotateY(180deg); background: radial-gradient(circle at 34% 28%, #ffffff, #d9d3c7 70%); box-shadow: 0 3px 6px rgba(0,0,0,.45), inset 0 -2px 4px rgba(0,0,0,.18); }
   .face.w::before { border: 1px solid rgba(0,0,0,.07); }
-  .face span { position: relative; }
-  .pos .face.b { color: var(--gold); }
-  .neg .face.b { color: #ff7d60; }
-  .zero .face.b { color: #6f7f78; }
-  .pos .face.w { color: #946310; }
-  .neg .face.w { color: #cf3f24; }
-  .zero .face.w { color: #aaa398; }
+  /* マイナスの石は角丸の四角 */
+  .cell.neg .dw { inset: 11%; }
+  .neg .face { border-radius: 24%; }
+  .neg .face::before { border-radius: 16%; }
+  .cell.neg.pv .dw::after { border-radius: 28%; }
+
+  /* 点数はサイコロの目の象嵌で表す */
+  .pos { --hi-b: #ffe3a0; --lo-b: #c8963c; --hi-w: #e8bc5e; --lo-w: #946310; }
+  .neg { --hi-b: #ffab8e; --lo-b: #c24a2e; --hi-w: #ec765a; --lo-w: #a5301a; }
+  .pips { position: absolute; inset: 0; pointer-events: none; }
+  .pips i { position: absolute; width: 17%; height: 17%; border-radius: 50%; transform: translate(-50%, -50%); }
+  .neg .pips i { width: 16%; height: 16%; border-radius: 26%; }
+  .face.b .pips i, .tile.b .pips i {
+    background: radial-gradient(circle at 40% 35%, var(--hi-b), var(--lo-b) 78%);
+    box-shadow: inset 0 1px 1.5px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.1);
+  }
+  .face.w .pips i, .tile.w .pips i {
+    background: radial-gradient(circle at 40% 35%, var(--hi-w), var(--lo-w) 78%);
+    box-shadow: inset 0 1px 1.5px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.75);
+  }
   .cell.pv .dw::after {
     content: ""; position: absolute; inset: -4%; border-radius: 50%;
     box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgba(242,198,109,.65);
@@ -268,8 +278,8 @@
   }
   .tile.b { background: radial-gradient(circle at 34% 28%, #5a5a5a, #121212 62%); box-shadow: 0 3px 7px rgba(0,0,0,.55), inset 0 -2px 3px rgba(0,0,0,.7); }
   .tile.w { background: radial-gradient(circle at 34% 28%, #fff, #d9d3c7 70%); box-shadow: 0 3px 7px rgba(0,0,0,.45), inset 0 -2px 3px rgba(0,0,0,.18); }
-  .tile.b.pos { color: var(--gold); } .tile.b.neg { color: #ff7d60; } .tile.b.zero { color: #8a9a93; }
-  .tile.w.pos { color: #946310; } .tile.w.neg { color: #cf3f24; } .tile.w.zero { color: #8f887c; }
+  .tile.neg { border-radius: 24%; width: 88%; }
+  .tile.b.zero { color: #8a9a93; } .tile.w.zero { color: #8f887c; }
   .tile .c {
     position: absolute; right: -5px; bottom: -5px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px;
     display: grid; place-items: center; font-size: 10px; font-weight: 600; color: var(--text);
@@ -278,7 +288,8 @@
   .tile:not(:disabled):hover { transform: translateY(-2px); }
   .tile.sel { transform: translateY(-3px); box-shadow: 0 0 0 2px var(--gold), 0 0 18px rgba(242,198,109,.55), 0 6px 12px rgba(0,0,0,.5); }
   .tile.gone { background: none; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.1); color: var(--faint) !important; }
-  .tile.gone .c { display: none; }
+  .tile.gone .c, .tile .c:empty { display: none; }
+  .tile.gone .pips i { background: none !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.13) !important; }
   .tile:disabled { cursor: default; }
   .tile.blank { grid-column: 1 / -1; aspect-ratio: auto; max-width: none; height: 34px; border-radius: 999px; font-size: 13px; gap: 6px; display: flex; justify-content: center; align-items: center; }
   .tile.blank small { font-family: var(--font); font-weight: 500; font-size: 11px; opacity: .8; }
@@ -390,7 +401,25 @@
     background: var(--gold-soft); color: var(--gold);
   }
   .figure { display: flex; gap: 14px; align-items: center; padding: 14px; margin: 4px 0 6px; border-radius: 14px; background: rgba(0,0,0,.22); border: 1px solid var(--line); }
-  .figure svg { flex: none; width: 220px; height: auto; }
+  .fig { flex: none; display: flex; flex-direction: column; gap: 6px; }
+  .fig-row { display: flex; align-items: center; gap: 6px; }
+  .fr { display: flex; }
+  .fc { width: 34px; height: 34px; display: grid; place-items: center; background: var(--felt); box-shadow: inset 0 0 0 1px #081410; }
+  .fc .tile { width: 26px; max-width: 26px; }
+  .fc .tile.neg { width: 23px; }
+  .fc .tile.new { outline: 1.5px dashed var(--gold); outline-offset: 2px; }
+  .fc .tile.hl { box-shadow: 0 0 0 2px var(--gold), 0 0 10px rgba(242,198,109,.6); }
+  .fc .fdot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); opacity: .8; box-shadow: 0 0 8px var(--gold); }
+  .fig .arr { color: var(--faint); font-size: 13px; }
+  .fig-cap { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .fig-cap .bad { color: #ff8f75; font-weight: 700; }
+  .legend { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: center; padding: 14px 16px; margin: 0 0 12px; border-radius: 14px; background: rgba(0,0,0,.22); border: 1px solid var(--line); }
+  .legend .lb { font-size: 12.5px; font-weight: 700; line-height: 1.3; }
+  .legend .lb small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); }
+  .legend .lt { display: flex; gap: 10px; flex-wrap: wrap; }
+  .legend .lt > span { display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: var(--num); font-size: 10.5px; color: var(--muted); }
+  .legend .tile { width: 30px; max-width: 30px; }
+  .legend .tile.neg { width: 27px; }
   .figure p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
   .figure p b { color: var(--text); font-weight: 500; }
   .keys { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0; font-size: 13px; }
@@ -436,7 +465,7 @@
   @media (max-width: 420px) {
     .dock button span { display: none; }
     .dock button { height: 44px; min-width: 44px; }
-    .who span { font-size: 10px; }
+    .who span { display: none; }
     .app { gap: 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -517,7 +546,7 @@
   <div class="sheet" role="dialog" aria-labelledby="menuTitle">
     <div class="eyebrow">SCORE OTHELLO</div>
     <h1 id="menuTitle">点数オセロ</h1>
-    <p class="lead">石の一つひとつに点数がついたオセロ。はさんだ石は数字をそのままに色だけが変わります。石の数ではなく、<b style="color:var(--text)">自分の色の数字の合計</b>で勝負。</p>
+    <p class="lead">石の一つひとつに点数がついたオセロ。はさんだ石は数字をそのままに色だけが変わります。石の数ではなく、<b style="color:var(--text)">自分の色の石の点数の合計</b>で勝負。</p>
     <div class="field">
       <label>対戦</label>
       <div class="seg" data-key="mode">
@@ -562,48 +591,27 @@
     <div class="eyebrow">HOW TO PLAY</div>
     <h2 id="helpTitle">ルール</h2>
     <ol class="rules">
-      <li><b>数字つきの手駒で打つ</b>ふたりとも同じ手駒を持ちます（6×6 なら <em>+1〜+4</em> と <em>−1〜−4</em> を各2枚、合計0点）。手番では手駒を1枚選び、通常のオセロと同じく相手の石をはさめるマスに置きます。中央の4石は0点です。</li>
-      <li><b>はさむと色だけが変わる</b>はさまれた石は数字はそのままで、あなたの色になります。相手の <em>+3</em> を返せば +3 点、相手の <em>−3</em> を返してしまうと −3 点。はさめる石はすべて返るので、返したくない石も返ることがあります。</li>
-      <li><b>得点 ＝ 自分の色の石 ＋ 残った手駒</b>盤上の自分の色の数字と、まだ手元にある手駒の数字の合計が得点です。スタートは 0 対 0。手駒を盤に出しても点は変わらず、<em>点が動くのは石を返したときだけ</em>です。</li>
+      <li><b>点数つきの手駒で打つ</b><em>丸い石がプラス、四角い石がマイナス</em>で、刻まれた目の数が点数です。ふたりとも同じ手駒を持ちます（6×6 なら <em>+1〜+4</em> と <em>−1〜−4</em> を各2枚、合計0点）。手番では手駒を1枚選び、通常のオセロと同じく相手の石をはさめるマスに置きます。中央の4石は0点です。</li>
+      <li><b>はさむと色だけが変わる</b>はさまれた石は形と点数はそのままで、色だけがあなたの色になります。相手の <em>+3</em> を返せば +3 点、相手の <em>−3</em> を返してしまうと −3 点。はさめる石はすべて返るので、返したくない石も返ることがあります。</li>
+      <li><b>得点 ＝ 自分の色の石 ＋ 残った手駒</b>盤上の自分の色の石と、まだ手元にある手駒の点数の合計が得点です。スタートは 0 対 0。手駒を盤に出しても点は変わらず、<em>点が動くのは石を返したときだけ</em>です。</li>
       <li><b>作戦のコツ</b>プラスの駒は角や辺など<em>返されにくい場所</em>へ。マイナスの駒は相手が<em>返さざるを得ない場所</em>へ置いて押しつけましょう。</li>
       <li><b>パスと終局</b>置ける場所がなければ自動でパス。両者とも置けなくなったら終局し、得点の高い方が勝ち。同点なら石の多い方が勝ちです。手駒を使い切ったあとは 0点の「ブランク駒」を何枚でも使えます。</li>
     </ol>
+    <div class="legend" id="legend"></div>
     <div class="figure">
-      <svg viewBox="0 0 220 112" aria-hidden="true" font-family="Outfit, sans-serif" font-weight="700">
-        <defs>
-          <radialGradient id="gB" cx=".34" cy=".28" r=".75"><stop offset="0" stop-color="#5a5a5a"/><stop offset=".8" stop-color="#121212"/></radialGradient>
-          <radialGradient id="gW" cx=".34" cy=".28" r=".75"><stop offset="0" stop-color="#fff"/><stop offset=".9" stop-color="#d9d3c7"/></radialGradient>
-        </defs>
-        <g fill="#1e6a4c" stroke="#081410" stroke-width="2">
-          <rect x="4" y="4" width="34" height="34"/><rect x="38" y="4" width="34" height="34"/><rect x="72" y="4" width="34" height="34"/>
-          <rect x="114" y="4" width="34" height="34"/><rect x="148" y="4" width="34" height="34"/><rect x="182" y="4" width="34" height="34"/>
-        </g>
-        <circle cx="21" cy="21" r="13" fill="url(#gB)" stroke="#f2c66d" stroke-width="1.5" stroke-dasharray="3 2"/>
-        <text x="21" y="25.5" font-size="12" text-anchor="middle" fill="#f2c66d">+2</text>
-        <circle cx="55" cy="21" r="13" fill="url(#gW)"/><text x="55" y="25.5" font-size="12" text-anchor="middle" fill="#cf3f24">−3</text>
-        <circle cx="89" cy="21" r="13" fill="url(#gB)"/><text x="89" y="25.5" font-size="12" text-anchor="middle" fill="#f2c66d">+1</text>
-        <path d="M107 21h5m-3-3 3 3-3 3" stroke="#93a99f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <circle cx="131" cy="21" r="13" fill="url(#gB)"/><text x="131" y="25.5" font-size="12" text-anchor="middle" fill="#f2c66d">+2</text>
-        <circle cx="165" cy="21" r="13" fill="url(#gB)" stroke="#f2c66d" stroke-width="1.5"/><text x="165" y="25.5" font-size="12" text-anchor="middle" fill="#ff7d60">−3</text>
-        <circle cx="199" cy="21" r="13" fill="url(#gB)"/><text x="199" y="25.5" font-size="12" text-anchor="middle" fill="#f2c66d">+1</text>
-        <text x="55" y="58" font-size="11" text-anchor="middle" fill="#93a99f" font-weight="500">黒が +2 を置くと…</text>
-        <text x="165" y="58" font-size="11" text-anchor="middle" fill="#ff7d60" font-weight="600">−3 を引き取って 黒 −3点</text>
-        <g fill="#1e6a4c" stroke="#081410" stroke-width="2">
-          <rect x="4" y="72" width="34" height="34"/><rect x="38" y="72" width="34" height="34"/><rect x="72" y="72" width="34" height="34"/>
-        </g>
-        <circle cx="21" cy="89" r="13" fill="url(#gW)"/><text x="21" y="93.5" font-size="12" text-anchor="middle" fill="#946310">+4</text>
-        <circle cx="55" cy="89" r="13" fill="url(#gB)"/><text x="55" y="93.5" font-size="12" text-anchor="middle" fill="#ff7d60">−2</text>
-        <circle cx="89" cy="89" r="6" fill="#f2c66d" opacity=".75"/>
-        <text x="114" y="86" font-size="11" fill="#93a99f" font-weight="500">白がここに置くと</text>
-        <text x="114" y="101" font-size="11" fill="#ff7d60" font-weight="600">−2 を引き取ってしまう</text>
-      </svg>
+      <div class="fig" aria-hidden="true">
+        <div class="fig-row"><div class="fr" data-cells="b:2:new w:-3 b:1"></div><span class="arr">→</span><div class="fr" data-cells="b:2 b:-3:hl b:1"></div></div>
+        <div class="fig-cap">黒が +2 を置くと… <span class="bad">−3 を引き取って黒 −3点</span></div>
+        <div class="fig-row"><div class="fr" data-cells="w:4 b:-2 dot"></div></div>
+        <div class="fig-cap">白がここに置くと <span class="bad">−2 を引き取ってしまう</span></div>
+      </div>
       <p><b>返すことが得とは限りません。</b>相手のマイナスをはさむと、その点ごと引き取ることになります。盤のマスに表示される数字（ヒント）は、そこに置いたときに<b>あなたの点がいくつ動くか</b>です。</p>
     </div>
     <h3>操作</h3>
     <dl class="keys">
       <dt>手駒 → マス</dt><dd>手駒を選んでから、光るマスをクリックして置く</dd>
       <dt>マス → 手駒</dt><dd>先にマスを選んで（点線枠）、あとから手駒を選んでも置けます</dd>
-      <dt>ホバー</dt><dd>返る石が光り、点の増減が表示されます</dd>
+      <dt>ホバー</dt><dd>返る石が光り、点の増減が表示されます。置かれた石に乗せるとその点数を表示</dd>
       <dt><kbd>1</kbd>〜<kbd>5</kbd></dt><dd>+の手駒を選ぶ（<kbd>Shift</kbd> 併用で −）、<kbd>0</kbd> でブランク駒</dd>
       <dt><kbd>⌘/Ctrl</kbd>+<kbd>Z</kbd></dt><dd>一手戻す</dd>
       <dt><kbd>H</kbd> / <kbd>Esc</kbd></dt><dd>ヒント切替 / 選択解除</dd>
@@ -664,6 +672,15 @@ function tileSet(N) { // 表示順: 上段 +1..+k, 下段 −1..−k
 const handCount = h => { let n = 0; for (let k = 0; k < NV; k++) n += h[k]; return n; };
 const handSum = h => { let s = 0; for (let k = 0; k < NV; k++) s += (k - OFF) * h[k]; return s; };
 function tileValues(h) { const vs = []; for (let k = 0; k < NV; k++) if (h[k]) vs.push(k - OFF); return vs.length ? vs : [0]; }
+// サイコロの目の配置（石の中での %座標）
+const PIP_POS = {
+  1: [[50, 50]],
+  2: [[70, 30], [30, 70]],
+  3: [[70, 30], [50, 50], [30, 70]],
+  4: [[30, 30], [70, 30], [30, 70], [70, 70]],
+  5: [[30, 30], [70, 30], [50, 50], [30, 70], [70, 70]],
+};
+const pipsHTML = v => '<span class="pips">' + (PIP_POS[Math.abs(v)] || []).map(([x, y]) => `<i style="left:${x}%;top:${y}%"></i>`).join('') + '</span>';
 const fmt = v => v > 0 ? '+' + v : v < 0 ? '−' + (-v) : '0';
 const sgnCls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : 'zero';
 
@@ -923,12 +940,12 @@ function buildBoard() {
   for (let i = 0; i < N * N; i++) {
     const c = document.createElement('div');
     c.className = 'cell'; c.setAttribute('role', 'gridcell');
-    c.innerHTML = '<span class="dot"></span><span class="hint"></span><div class="dw"><div class="disc"><div class="face b"><span></span></div><div class="face w"><span></span></div></div></div>';
+    c.innerHTML = '<span class="dot"></span><span class="hint"></span><div class="dw"><div class="disc"><div class="face b"></div><div class="face w"></div></div></div>';
     c.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { ui.hover = i; render(); } });
     c.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && ui.hover === i) { ui.hover = null; render(); } });
     c.addEventListener('pointerdown', e => { ui.pointer = e.pointerType; });
     c.addEventListener('click', () => onCell(i));
-    c._num = c.querySelectorAll('.face span'); c._hint = c.querySelector('.hint'); c._dw = c.querySelector('.dw'); c._disc = c.querySelector('.disc');
+    c._faces = c.querySelectorAll('.face'); c._hint = c.querySelector('.hint'); c._dw = c.querySelector('.dw'); c._disc = c.querySelector('.disc');
     c._v = null;
     bd.appendChild(c); cells.push(c);
   }
@@ -946,7 +963,8 @@ function buildBoard() {
     for (const v of vs) {
       const t = document.createElement('button');
       t.className = 'tile ' + (p === BLACK ? 'b ' : 'w ') + sgnCls(v);
-      t.innerHTML = `<span>${fmt(v)}</span><span class="c"></span>`;
+      t.innerHTML = `${pipsHTML(v)}<span class="c"></span>`;
+      t.setAttribute('aria-label', `${fmt(v)}点の駒`);
       t.addEventListener('click', () => onTile(p, v));
       grid.appendChild(t); tiles[v] = t;
     }
@@ -977,9 +995,10 @@ function render() {
     c.classList.toggle('ghost', ghost);
     if (show && c._v !== v) {
       c._v = v;
-      c._num[0].textContent = c._num[1].textContent = fmt(v);
+      c._faces[0].innerHTML = c._faces[1].innerHTML = pipsHTML(v);
       c.classList.remove('pos', 'neg', 'zero'); c.classList.add(sgnCls(v));
     }
+    c.setAttribute('aria-label', show ? `${NAME[show]}の石 ${fmt(v)}点` : '空きマス');
     const valid = canAct && legal.has(i);
     c.classList.toggle('valid', valid);
     c.classList.toggle('pv', pv.has(i));
@@ -1057,11 +1076,21 @@ function renderStatus(target) {
 
 const tipEl = $('#tip');
 function renderTip(target) {
+  const h = ui.hover;
+  if (target == null && h != null && G.own[h] && ui.pointer === 'mouse') { // 置かれた石の点数
+    const v = G.val[h];
+    tipEl.className = 'tip show ' + sgnCls(v);
+    tipEl.innerHTML = `${fmt(v)} 点<small>${NAME[G.own[h]]}の石</small>`;
+    placeTip(h); return;
+  }
   if (target == null || G.over) { hideTip(); return; }
   const d = deltaOf(target, G.turn), n = flipsOf(G.own, target, G.turn).length;
   tipEl.className = 'tip show ' + sgnCls(d);
   tipEl.innerHTML = `${d === 0 ? '±0' : fmt(d)} 点<small>${n}枚返す</small>`;
-  const r = cells[target].getBoundingClientRect();
+  placeTip(target);
+}
+function placeTip(i) {
+  const r = cells[i].getBoundingClientRect();
   tipEl.style.left = (r.left + r.width / 2) + 'px';
   tipEl.style.top = (r.top - 6) + 'px';
 }
@@ -1297,6 +1326,19 @@ document.addEventListener('keydown', e => {
   if (m && humanTurn()) { const n = +m[1]; onTile(G.turn, e.shiftKey ? -n : n); }
 });
 addEventListener('resize', () => { if (G) renderTip(ui.pending); });
+
+// ===== ルール画面の凡例と図 =====
+const miniDisc = (c, v, cls = '') => `<span class="tile ${c} ${sgnCls(v)} ${cls}">${pipsHTML(v)}</span>`;
+$('#legend').innerHTML = [[1, 'プラス', '丸い石'], [-1, 'マイナス', '四角い石']].map(([sg, a, b]) =>
+  `<div class="lb">${a}<small>${b}</small></div><div class="lt">` +
+  [1, 2, 3, 4, 5].map(n => `<span>${miniDisc('b', sg * n)}${fmt(sg * n)}</span>`).join('') + '</div>').join('');
+document.querySelectorAll('.fr[data-cells]').forEach(fr => {
+  fr.innerHTML = fr.dataset.cells.split(' ').map(t => {
+    if (t === 'dot') return '<div class="fc"><i class="fdot"></i></div>';
+    const [c, v, cls] = t.split(':');
+    return `<div class="fc">${miniDisc(c, +v, cls || '')}</div>`;
+  }).join('');
+});
 
 // ===== 起動 =====
 syncDock();
